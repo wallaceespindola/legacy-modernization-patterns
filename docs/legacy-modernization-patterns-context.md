@@ -151,7 +151,7 @@ Three more framing points:
 - **Protect the mainframe, too:** retries and fan-out raise MIPS/MSU consumption, which is often the billing metric. Add rate limiting / load shedding at the facade, and retry budgets.
 - **Bulkhead per legacy dependency** (separate connection pools for CICS, MQ, Db2), so a slow batch window on one doesn't starve inquiries on another.
 
-### 1.2 Patterns missing from the original list
+### 1.2 Supporting patterns
 
 | Pattern                                       | Why it matters here                                                                                                                                                       |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

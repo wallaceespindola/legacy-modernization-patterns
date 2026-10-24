@@ -57,7 +57,7 @@ In short: Strangler Fig is the migration framework, DDD decides what to extract,
 
 - A catalog of the twelve core patterns, each with banking use cases and pitfalls
 - Notes on each pattern for mainframe estates: z/OS Connect and MQ interception, COMP-3 and EBCDIC translation, intraday memo posting vs end-of-day posting, COBOL vs Java rounding, reversal entries as saga compensation, and "unknown outcome" on timed-out financial writes
-- Nine missing patterns and eight anti-patterns
+- Nine supporting patterns and eight anti-patterns
 - A phased account modernization example with exit criteria for each phase
 - What a solution architect owns, including regulatory alignment (DORA, BCBS 239, PCI DSS) and the cost of running both systems
 - Where AI helps (rule extraction, copybook-to-schema mapping, parallel-run triage) and the guardrails it needs
