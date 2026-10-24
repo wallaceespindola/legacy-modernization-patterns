@@ -1,0 +1,27 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local env and secrets
+.env
+.env.*
+!.env.example
+
+# Node tooling (markdownlint, marp, mermaid-cli via npx)
+node_modules/
+
+# Build output
+build/
+out/
+target/
+
+# Office lock and temp files
+~$*
+*.tmp
+
+# Agent scratch
+.claude/settings.local.json
+agent-logs/

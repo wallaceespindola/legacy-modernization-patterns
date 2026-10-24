@@ -1,8 +1,6 @@
 # Context: Architecture Patterns for Legacy Modernization
 
-> Strangler Fig and complementary patterns for banking systems.
-> Use this file as context for articles, decks, design docs, or AI-assisted architecture work.
-> Covers the core patterns, mainframe and banking nuances, missing patterns, anti-patterns, and regulatory constraints.
+> Strangler Fig and complementary patterns for banking systems. Use this file as context for articles, decks, design docs, or AI-assisted architecture work. Covers the core patterns, mainframe and banking nuances, missing patterns, anti-patterns, and regulatory constraints.
 
 ## Executive Summary
 
@@ -20,20 +18,20 @@ Three more framing points:
 
 ## 1. Principal Patterns and Use Cases
 
-| #   | Pattern                             | What it does                                                                                                    | Banking use case                                                              | Watch out for                                                                         |
-| --- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| 1   | **Strangler Fig**                   | Gradually route specific functions from legacy to modern services; the rest stays on the mainframe              | Downtime and big-bang replacement are unacceptable                            | Correct routing, temporary coexistence, data ownership, rollback                      |
-| 2   | **Anti-Corruption Layer (ACL)**     | Translate legacy protocols, record structures, errors, and domain semantics into clean modern interfaces/models | Around COBOL, IBM CICS, proprietary record formats                            | Keeps old assumptions from contaminating new services                                 |
-| 3   | **Branch by Abstraction**           | Put an interface around a tightly coupled implementation, gradually switch callers to the replacement           | Replacing individual calculations or internal modules                         | Use when gateway routing can't isolate the logic                                      |
-| 4   | **Domain-Driven Design (DDD)**      | Identify bounded contexts; assign responsibilities to business capabilities                                     | Accounts, Lending, Payments, Customer, Ledger                                 | Avoid one microservice per legacy program or copying arbitrary legacy boundaries      |
-| 5   | **Change Data Capture (CDC)**       | Propagate committed source changes to new projections and downstream consumers                                  | New account inquiry while legacy ledger stays authoritative                   | Lag, sequencing, duplicates, schema evolution, reconciliation                         |
-| 6   | **CQRS**                            | Separate transactional writes from read-optimized models                                                        | High-volume mobile banking inquiries without moving posting off the mainframe | Explain eventual consistency to consumers                                             |
-| 7   | **Transactional Outbox**            | Commit state change + outgoing event record in one local DB transaction; publish asynchronously                 | Reliable payment/account event propagation                                    | Consumers still need idempotency                                                      |
-| 8   | **Event-Driven Architecture (EDA)** | Publish domain events to decouple integrations                                                                  | Notifications, fraud monitoring, audit pipelines, analytics                   | Ordering, replay, schema evolution, error-handling policies                           |
-| 9   | **Saga**                            | Coordinate multi-service process via local transactions + compensating actions                                  | Multi-step loan origination, onboarding                                       | **Not** a substitute for atomic ledger posting                                        |
-| 10  | **Parallel Run / Shadow Traffic**   | Run old and new with equivalent inputs, compare outputs before cutover                                          | Interest calculations, fees, risk rules                                       | Shadow processing must not create duplicate financial or customer-facing side effects |
-| 11  | **Hexagonal Architecture**          | Separate domain logic from interfaces/infrastructure via ports and adapters                                     | Swap mainframe adapters without rewriting the domain                          | Don't over-port: one adapter per port is fine                                         |
-| 12  | **Circuit Breaker + Bulkhead**      | Limit cascading failures, isolate resources when legacy deps are slow/unavailable                               | Protecting modern services from mainframe latency/outages                     | Timeouts and retries on financial writes where the outcome may be uncertain           |
+| # | Pattern | What it does | Banking use case | Watch out for |
+| --- | --- | --- | --- | --- |
+| 1 | **Strangler Fig** | Gradually route specific functions from legacy to modern services; the rest stays on the mainframe | Downtime and big-bang replacement are unacceptable | Correct routing, temporary coexistence, data ownership, rollback |
+| 2 | **Anti-Corruption Layer (ACL)** | Translate legacy protocols, record structures, errors, and domain semantics into clean modern interfaces/models | Around COBOL, IBM CICS, proprietary record formats | Keeps old assumptions from contaminating new services |
+| 3 | **Branch by Abstraction** | Put an interface around a tightly coupled implementation, gradually switch callers to the replacement | Replacing individual calculations or internal modules | Use when gateway routing can't isolate the logic |
+| 4 | **Domain-Driven Design (DDD)** | Identify bounded contexts; assign responsibilities to business capabilities | Accounts, Lending, Payments, Customer, Ledger | Avoid one microservice per legacy program or copying arbitrary legacy boundaries |
+| 5 | **Change Data Capture (CDC)** | Propagate committed source changes to new projections and downstream consumers | New account inquiry while legacy ledger stays authoritative | Lag, sequencing, duplicates, schema evolution, reconciliation |
+| 6 | **CQRS** | Separate transactional writes from read-optimized models | High-volume mobile banking inquiries without moving posting off the mainframe | Explain eventual consistency to consumers |
+| 7 | **Transactional Outbox** | Commit state change + outgoing event record in one local DB transaction; publish asynchronously | Reliable payment/account event propagation | Consumers still need idempotency |
+| 8 | **Event-Driven Architecture (EDA)** | Publish domain events to decouple integrations | Notifications, fraud monitoring, audit pipelines, analytics | Ordering, replay, schema evolution, error-handling policies |
+| 9 | **Saga** | Coordinate multi-service process via local transactions + compensating actions | Multi-step loan origination, onboarding | **Not** a substitute for atomic ledger posting |
+| 10 | **Parallel Run / Shadow Traffic** | Run old and new with equivalent inputs, compare outputs before cutover | Interest calculations, fees, risk rules | Shadow processing must not create duplicate financial or customer-facing side effects |
+| 11 | **Hexagonal Architecture** | Separate domain logic from interfaces/infrastructure via ports and adapters | Swap mainframe adapters without rewriting the domain | Don't over-port: one adapter per port is fine |
+| 12 | **Circuit Breaker + Bulkhead** | Limit cascading failures, isolate resources when legacy deps are slow/unavailable | Protecting modern services from mainframe latency/outages | Timeouts and retries on financial writes where the outcome may be uncertain |
 
 ### 1.1 Pattern details
 
@@ -153,17 +151,17 @@ Three more framing points:
 
 ### 1.2 Supporting patterns
 
-| Pattern                                       | Why it matters here                                                                                                                                                       |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **API Gateway / Legacy Facade**               | The concrete interception point that Strangler Fig needs. It also centralizes auth, rate limiting, and routing toggles.                                                   |
-| **Event Interception** (Fowler)               | Strangle by intercepting state changes (CDC/MQ) rather than calls. Useful when there is no clean call boundary.                                                           |
-| **Idempotent Consumer / Inbox**               | The required partner of Outbox, EDA, and any retried call.                                                                                                                |
-| **Characterization / Golden-Master Testing**  | Pins legacy behavior before Branch by Abstraction or a rewrite. Gives Parallel Run its baseline.                                                                          |
-| **Feature Toggles / Canary Release**          | Make every routing and implementation switch reversible and gradual.                                                                                                      |
-| **Reconciliation (as a first-class pattern)** | Scheduled, automated comparison of balances/positions between legacy and new stores, with break management. The real cutover gate in banking.                             |
-| **Data Ownership Transfer (staged)**          | Moves the authoritative copy safely without dual writes (see below).                                                                                                      |
-| **Reverse Synchronization**                   | After the new service owns writes, legacy batch, reports, and regulatory feeds still need the data. Use reverse CDC or ACL write-back until those consumers are migrated. |
-| **Distributed Tracing / Correlation IDs**     | Propagate one correlation ID from channel → facade → service → CICS transaction/MQ message. Without it, incident triage across two worlds is guesswork.                   |
+| Pattern | Why it matters here |
+| --- | --- |
+| **API Gateway / Legacy Facade** | The concrete interception point that Strangler Fig needs. It also centralizes auth, rate limiting, and routing toggles. |
+| **Event Interception** (Fowler) | Strangle by intercepting state changes (CDC/MQ) rather than calls. Useful when there is no clean call boundary. |
+| **Idempotent Consumer / Inbox** | The required partner of Outbox, EDA, and any retried call. |
+| **Characterization / Golden-Master Testing** | Pins legacy behavior before Branch by Abstraction or a rewrite. Gives Parallel Run its baseline. |
+| **Feature Toggles / Canary Release** | Make every routing and implementation switch reversible and gradual. |
+| **Reconciliation (as a first-class pattern)** | Scheduled, automated comparison of balances/positions between legacy and new stores, with break management. The real cutover gate in banking. |
+| **Data Ownership Transfer (staged)** | Moves the authoritative copy safely without dual writes (see below). |
+| **Reverse Synchronization** | After the new service owns writes, legacy batch, reports, and regulatory feeds still need the data. Use reverse CDC or ACL write-back until those consumers are migrated. |
+| **Distributed Tracing / Correlation IDs** | Propagate one correlation ID from channel → facade → service → CICS transaction/MQ message. Without it, incident triage across two worlds is guesswork. |
 
 **Data ownership transfer — staged, single writer at every stage:**
 
@@ -203,15 +201,15 @@ Rule: **never dual-write** from application code to both stores. Exactly one sys
 
 **Phases and exit criteria:**
 
-| Phase              | Steps                                                                                                                                                                          | Exit criterion                                                                               |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| 0. Discover        | DDD (Event Storming, context map), dependency analysis, CDC feasibility per data store, baseline metrics (MIPS, latency, error rates)                                          | Bounded contexts agreed; first capability selected (Account Inquiry)                         |
-| 1. Encapsulate     | ACL over legacy account functions; facade installed as **pass-through** (100% legacy); correlation IDs end to end                                                              | All channel traffic flows through the facade with no behavior change                         |
-| 2. Build read side | CDC → translation → read model (CQRS); pending vs posted modeled; lag SLO and fallback-to-legacy route                                                                         | Read model reconciles with legacy within tolerance over N business days, including month-end |
-| 3. Prove           | Parallel Run / shadow on balance and inquiry responses; discrepancy triage                                                                                                     | Mismatch rate below agreed threshold; all known differences explained and signed off         |
-| 4. Shift reads     | Canary route flips per channel/segment → 100%; legacy path kept as fallback                                                                                                    | SLOs hold at full traffic; rollback tested                                                   |
-| 5. Extend          | Outbox + EDA for newly owned events (notifications, fraud signals); Branch by Abstraction for selected calculations (e.g. interest) with characterization tests + Parallel Run | Each replacement passes its own shadow → canary → cutover                                    |
-| 6. Decommission    | Remove legacy path, ACL pieces, and transitional pipelines for the capability                                                                                                  | Financial reconciliation clean, audit evidence filed, explicit business + risk sign-off      |
+| Phase | Steps | Exit criterion |
+| --- | --- | --- |
+| 0. Discover | DDD (Event Storming, context map), dependency analysis, CDC feasibility per data store, baseline metrics (MIPS, latency, error rates) | Bounded contexts agreed; first capability selected (Account Inquiry) |
+| 1. Encapsulate | ACL over legacy account functions; facade installed as **pass-through** (100% legacy); correlation IDs end to end | All channel traffic flows through the facade with no behavior change |
+| 2. Build read side | CDC → translation → read model (CQRS); pending vs posted modeled; lag SLO and fallback-to-legacy route | Read model reconciles with legacy within tolerance over N business days, including month-end |
+| 3. Prove | Parallel Run / shadow on balance and inquiry responses; discrepancy triage | Mismatch rate below agreed threshold; all known differences explained and signed off |
+| 4. Shift reads | Canary route flips per channel/segment → 100%; legacy path kept as fallback | SLOs hold at full traffic; rollback tested |
+| 5. Extend | Outbox + EDA for newly owned events (notifications, fraud signals); Branch by Abstraction for selected calculations (e.g. interest) with characterization tests + Parallel Run | Each replacement passes its own shadow → canary → cutover |
+| 6. Decommission | Remove legacy path, ACL pieces, and transitional pipelines for the capability | Financial reconciliation clean, audit evidence filed, explicit business + risk sign-off |
 
 ```mermaid
 flowchart LR
@@ -294,15 +292,15 @@ Treat AI as a _candidate generator_ and humans plus deterministic checks as the 
 
 **Additional shortcuts:**
 
-| Goal                                        | Patterns                                                                                            |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Consume events safely                       | Idempotent Consumer / Inbox + DLQ                                                                   |
-| No clean call boundary to intercept         | Event Interception (CDC/MQ) + ACL                                                                   |
-| Move write ownership                        | Staged Data Ownership Transfer + Reverse Sync + Reconciliation                                      |
-| Make every switch reversible                | Feature Toggles + Canary + facade-level fallback                                                    |
-| Safe financial writes over unreliable links | Idempotency keys + status inquiry + reconciliation queue (not blind retries)                        |
-| Modernize batch                             | File/job-level strangling + golden-master comparison of output files                                |
-| Debug across both worlds                    | Correlation IDs + distributed tracing (e.g. OpenTelemetry) through facade, services, and MQ headers |
+| Goal | Patterns |
+| --- | --- |
+| Consume events safely | Idempotent Consumer / Inbox + DLQ |
+| No clean call boundary to intercept | Event Interception (CDC/MQ) + ACL |
+| Move write ownership | Staged Data Ownership Transfer + Reverse Sync + Reconciliation |
+| Make every switch reversible | Feature Toggles + Canary + facade-level fallback |
+| Safe financial writes over unreliable links | Idempotency keys + status inquiry + reconciliation queue (not blind retries) |
+| Modernize batch | File/job-level strangling + golden-master comparison of output files |
+| Debug across both worlds | Correlation IDs + distributed tracing (e.g. OpenTelemetry) through facade, services, and MQ headers |
 
 ### When **not** to use Strangler Fig
 
