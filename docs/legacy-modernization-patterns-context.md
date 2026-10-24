@@ -2,7 +2,7 @@
 
 > Strangler Fig and complementary patterns for banking systems.
 > Use this file as context for articles, decks, design docs, or AI-assisted architecture work.
-> Status: original ideas **validated** (verdict per section) and **expanded** (nuances, missing patterns, anti-patterns, banking constraints).
+> Covers the core patterns, mainframe and banking nuances, missing patterns, anti-patterns, and regulatory constraints.
 
 ## Executive Summary
 
@@ -10,9 +10,9 @@
 - Combine it with domain modeling, translation boundaries, synchronization, event reliability, testing, and operational resilience patterns.
 - Modernization can **retain valuable mainframe workloads**. Full replacement is not required.
 
-**Validation:** Sound and consistent with the canonical sources (Fowler's _Strangler Fig Application_, Evans' DDD, Newman's _Monolith to Microservices_). The "retain" point matches the industry _R_ frameworks (Gartner 5Rs / AWS 7Rs: retire, retain, rehost, relocate, replatform, repurchase, refactor). Modernization is a **portfolio decision per capability**, not one decision for the whole system.
+The "retain" option matches the industry _R_ frameworks (Gartner 5Rs / AWS 7Rs: retire, retain, rehost, relocate, replatform, repurchase, refactor). Modernization is a **portfolio decision per capability**, not one decision for the whole system.
 
-**Expansion:** Three more framing points worth stating up front:
+Three more framing points:
 
 1. **Data ownership is the hard part.** Moving code is easy compared to moving the _authoritative copy_ of the data. Every pattern below exists either to move ownership safely or to live with split ownership for a while.
 2. **Coexistence is a cost, not a phase you can ignore.** Transitional architecture (facades, CDC pipelines, reconciliation jobs) has to be built, run, and eventually removed. Budget for teardown, or the "strangler" becomes a permanent second system.
@@ -35,11 +35,9 @@
 | 11  | **Hexagonal Architecture**          | Separate domain logic from interfaces/infrastructure via ports and adapters                                     | Swap mainframe adapters without rewriting the domain                          | Don't over-port: one adapter per port is fine                                         |
 | 12  | **Circuit Breaker + Bulkhead**      | Limit cascading failures, isolate resources when legacy deps are slow/unavailable                               | Protecting modern services from mainframe latency/outages                     | Timeouts and retries on financial writes where the outcome may be uncertain           |
 
-**Validation:** All twelve definitions and use cases are correct. The cautions you flagged are the right ones, especially Saga ≠ atomic posting, shadow side effects, and uncertain outcomes on retried writes. The notes below add depth to each.
+### 1.1 Pattern details
 
-### 1.1 Pattern-by-pattern validation and expansion
-
-#### Strangler Fig — ✅ valid
+#### Strangler Fig
 
 - **Interception points** are the real design decision. On a mainframe, the usual options are:
   - an API gateway/facade in front of channel traffic, with mainframe functions exposed as REST (e.g. IBM z/OS Connect);
@@ -51,7 +49,7 @@
 - **Rollback must be a routing change, not a deployment.** If the new service has already taken write ownership, rollback also needs data to flow back into legacy (see §1.2 Data ownership transfer).
 - **Batch is often the bigger half.** Online CICS transactions get the attention, but end-of-day batch (interest accrual, statements, settlement files) holds much of the business logic. Strangle batch separately, job by job or file by file (e.g. Spring Batch replacing a JCL step whose input/output files stay identical).
 
-#### Anti-Corruption Layer — ✅ valid
+#### Anti-Corruption Layer
 
 - **What it translates:**
   - EBCDIC → UTF-8;
@@ -63,13 +61,13 @@
 - **Risk:** the ACL can turn into a new monolith or a latency hotspot. Keep one ACL per bounded context. Give it versioned contracts and no business logic beyond translation.
 - **Retire it** together with the legacy capability behind it. An ACL with no legacy behind it is dead weight.
 
-#### Branch by Abstraction — ✅ valid
+#### Branch by Abstraction
 
 - Needs **code-level access** to the caller. In COBOL estates, the "abstraction" is often a CICS `LINK` target program, a called subprogram, or a copybook interface. The new implementation can be another COBOL program or a call out to a Java service.
 - **Pair it with feature toggles** so you can switch per call path and revert without redeploying.
 - **Pair it with characterization tests** (Feathers' _Working Effectively with Legacy Code_) / golden-master tests. They pin current behavior, _including bugs that downstream systems depend on_, before you swap the implementation.
 
-#### Domain-Driven Design — ✅ valid
+#### Domain-Driven Design
 
 - Use **Event Storming** and **Context Mapping** to find boundaries. Context-map relationships (conformist, customer–supplier, ACL, published language) tell you exactly where ACLs are needed.
 - **Classify subdomains:**
@@ -77,7 +75,7 @@
   - _Customer notifications, statements, inquiry_ are supporting/generic domains. They are good first candidates.
 - **Prefer capability boundaries over code boundaries.** Legacy program structure reflects 1980s batch/online splits, not business capabilities.
 
-#### Change Data Capture — ✅ valid
+#### Change Data Capture
 
 - **Source matters:** Db2 for z/OS has mature log-based CDC tooling. IMS and VSAM are harder and tool-dependent. Confirm CDC feasibility per data store early. It can decide the whole approach.
 - **CDC exposes the physical schema.** Raw CDC records are legacy-shaped, so route them through a translation step (an ACL for data) before they reach the new read model. Otherwise the new model inherits the legacy schema.
@@ -89,7 +87,7 @@
   - a replay / initial-snapshot procedure;
   - a schema-change runbook, because copybook changes break pipelines.
 
-#### CQRS — ✅ valid
+#### CQRS
 
 - **Read-your-own-writes** is the UX problem. A customer pays, then sees the old balance. Mitigations:
   - overlay pending transactions in the client;
@@ -98,13 +96,13 @@
 - **Fallback path:** if CDC lag breaches the SLO, the facade can route balance reads back to legacy via the ACL. That turns CQRS into a reversible step.
 - **CQRS ≠ Event Sourcing.** You don't need event sourcing to apply CQRS here. The mainframe ledger is already the write model.
 
-#### Transactional Outbox — ✅ valid
+#### Transactional Outbox
 
 - **On the mainframe side,** the equivalent is writing the event to a Db2 outbox table, or putting it on MQ, inside the **same CICS unit of work / syncpoint** as the business update. This is a well-established mainframe technique.
 - **Relay options:** polling publisher, or CDC on the outbox table (log tailing, e.g. Debezium on the modern side). Log tailing avoids polling load and keeps commit order.
 - **Delivery is at-least-once,** so consumers need an **Idempotent Consumer / Inbox** (dedupe table keyed by event ID, updated in the same transaction as the consumer's state change).
 
-#### Event-Driven Architecture — ✅ valid
+#### Event-Driven Architecture
 
 - **Be explicit about the event style:** _event notification_ (thin, consumer calls back), _event-carried state transfer_ (fat, consumer keeps a local copy), or _event sourcing_ (events are the record). They have very different coupling and data-protection profiles.
 - **Ordering:** guaranteed only per partition, so partition by aggregate (account ID).
@@ -114,14 +112,14 @@
   - retention long enough for replay.
 - **Personal data in events:** GDPR erasure is hard on immutable logs. Keep personal data out of events where you can, or use crypto-shredding (encrypt per customer, delete the key).
 
-#### Saga — ✅ valid (and your caveat is the key point)
+#### Saga
 
 - **Compensation in banking is a reversal entry, not a rollback.** Accounting never deletes, it books an offsetting entry, so compensation is natural for financial steps _if_ the ledger supports reversals.
 - **Orchestration vs choreography:** prefer **orchestration** for regulated multi-step flows (loan origination, onboarding/KYC). It gives one place to see state, audit, and time out.
 - **Design the pivot transaction:** the step after which the saga can only go forward (e.g. disbursement). Put irreversible and customer-visible actions after it.
 - **Isolation anomalies:** sagas have no isolation, so use semantic locks (e.g. `PENDING_APPROVAL` state) to stop concurrent sagas from acting on half-finished data.
 
-#### Parallel Run / Shadow Traffic — ✅ valid
+#### Parallel Run / Shadow Traffic
 
 - **Comparison is a product, not a script.** Define:
   - tolerance rules (rounding);
@@ -138,12 +136,12 @@
 - **Side-effect isolation:** the shadow path writes to sandboxed stores and has notification/payment adapters stubbed. Make that enforced by configuration, not by convention.
 - **Stages:** shadow (new result discarded, compared) → canary (new result served to a small segment, legacy still computed and compared) → full cutover → legacy kept warm for a defined rollback window.
 
-#### Hexagonal Architecture — ✅ valid
+#### Hexagonal Architecture
 
 - Main payoff during migration: **the same domain core runs against a mainframe adapter (via ACL) today and a native repository tomorrow.** Contract tests on the port prove both adapters behave the same.
 - Lets domain logic be unit-tested without mainframe access. Test environments are often the scarcest mainframe resource.
 
-#### Circuit Breaker + Bulkhead — ✅ valid (the financial-write caveat is critical)
+#### Circuit Breaker + Bulkhead
 
 - **A timeout is not a failure; it is an unknown outcome.** For posting/payment calls:
   - require an **idempotency key** end to end;
@@ -193,11 +191,9 @@ Rule: **never dual-write** from application code to both stores. Exactly one sys
 
 **Starting point:** COBOL core banking on a mainframe stays system of record for ledger posting and settlement. Goal: modern Java / Spring Boot account inquiries and a better mobile UX.
 
-**Original sequence:**
-
 1. **DDD** — delineate Account Inquiry, Ledger Posting, Interest, and Customer responsibilities.
 2. **ACL** — present stable modern interfaces over legacy account data and functions.
-3. **Strangler Fig** — introduce routing at a controlled interface boundary.
+3. **Strangler Fig** — install the facade at a controlled interface boundary as a pass-through (100% legacy); flip routes only after the Parallel Run proves equivalence.
 4. **CDC** — populate a modern, read-optimized account view.
 5. **CQRS** — scale reads independently; financial writes stay authoritative in the ledger.
 6. **Parallel Run** — compare balance display and calculation behavior against legacy.
@@ -205,9 +201,7 @@ Rule: **never dual-write** from application code to both stores. Exactly one sys
 8. **Branch by Abstraction** — where feasible, replace internal legacy calculations.
 9. **Decommission** selected capabilities only after financial reconciliation, operational validation, and explicit cutover approval.
 
-**Validation:** Right patterns, one ordering refinement. Step 3 installs the routing _before_ the read model (steps 4–5) and the Parallel Run (step 6) exist. That works only if step 3 means **"install the facade as a pass-through"**. Actual route flips must come after the Parallel Run proves equivalence.
-
-**Refined sequence:**
+**Phases and exit criteria:**
 
 | Phase              | Steps                                                                                                                                                                          | Exit criterion                                                                               |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
@@ -243,14 +237,8 @@ flowchart LR
 - Define gateway routing, interface contracts, event schemas, resilience, and observability.
 - Decide which workloads stay on the mainframe and which move.
 - Define phased rollout, testing, reconciliation, recovery, rollback, and acceptance criteria.
-
-**Validation:** Accurate. Two gaps:
-
 - **Making trade-offs explicit and recorded:** ADRs (Architecture Decision Records) for every pattern choice. Regulators and auditors ask _why_, years later.
 - **Owning the business case:** the modernization roadmap has to show value per phase (MIPS reduction, time-to-market, risk reduction), or funding stops mid-strangle.
-
-**Expansion — further responsibilities:**
-
 - **Transitional architecture lifecycle:** design the scaffolding _and_ its removal date.
 - **Regulatory alignment:**
   - operational resilience and ICT third-party risk (in the EU: DORA, applicable since January 2025; includes exit strategies for cloud providers);
@@ -273,9 +261,9 @@ flowchart LR
 
 **Guardrail:** validate all AI output with static analysis, expert review, deterministic tests, secure source handling, and reconciliation.
 
-**Validation:** Realistic, and the framing is right: AI as _candidate generator_, humans and deterministic checks as _gate_. The vendor ecosystem has moved this way, with mainframe-specific assistants from the major platform and cloud vendors (e.g. IBM watsonx Code Assistant for Z, AWS Transform for mainframe). Treat specific tool capabilities as moving targets and evaluate them against your own code.
+Treat AI as a _candidate generator_ and humans plus deterministic checks as the _gate_. The vendor ecosystem has moved this way, with mainframe-specific assistants from the major platform and cloud vendors (e.g. IBM watsonx Code Assistant for Z, AWS Transform for mainframe). Treat specific tool capabilities as moving targets and evaluate them against your own code.
 
-**Expansion — more high-value uses:**
+**More high-value uses:**
 
 - **Copybook → schema generation:** COBOL copybooks to JSON Schema / Avro / Java records, including REDEFINES and OCCURS DEPENDING ON handling. Verify with round-trip tests on real records.
 - **Characterization test generation:** use production-like inputs to generate golden-master cases. Humans decide which current behaviors are bugs vs requirements.
@@ -283,7 +271,7 @@ flowchart LR
 - **Documentation recovery:** explain programs, JCL flows, and data lineage for onboarding modern engineers.
 - **Parallel-run triage:** cluster mismatches by root cause (rounding, date logic, data quality) so experts review categories, not rows.
 
-**Expansion — specific risks to manage:**
+**Specific risks to manage:**
 
 - **Plausible but wrong business rules.** Require **traceability**: every extracted rule cites source program, paragraph, and line, so a reviewer can verify it.
 - **Tests that encode the AI's misunderstanding.** Generated tests must be validated against real legacy outputs, not against generated code.
@@ -304,7 +292,7 @@ flowchart LR
 | Prove equivalence               | Parallel Run + financial reconciliation          |
 | Contain failures                | Circuit Breaker + Bulkhead                       |
 
-**Validation:** All pairings are correct. Additional shortcuts:
+**Additional shortcuts:**
 
 | Goal                                        | Patterns                                                                                            |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -338,11 +326,7 @@ The last metric keeps the "perpetual strangler" visible.
 
 ## Key Message
 
-Strangler Fig is the **migration framework**; DDD identifies **what to extract**; ACL **protects the new design**; data and messaging patterns **enable coexistence**; parallel validation plus resilience controls **make the journey safe**.
-
-**Validation:** Strong summary. Suggested extension:
-
-> …and **reconciliation plus staged data-ownership transfer decide when it is actually done**. A capability is modernized only when the new system owns its data, the books balance, and the legacy path has been switched off.
+Strangler Fig is the **migration framework**; DDD identifies **what to extract**; ACL **protects the new design**; data and messaging patterns **enable coexistence**; parallel validation plus resilience controls **make the journey safe**; and **reconciliation plus staged data-ownership transfer decide when it is actually done**. A capability is modernized only when the new system owns its data, the books balance, and the legacy path has been switched off.
 
 ## Glossary
 
