@@ -1,0 +1,19 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName Arial
+participant "Java service" as S
+participant "Posting gateway\n(mainframe)" as G
+participant "Reconciliation queue" as Q
+S -> G : post(request, key K)
+G --> S : timeout
+note right of S : outcome unknown,\nnot failed
+S -> G : status(K)
+alt found
+  G --> S : POSTED
+else not found
+  S -> G : post(request, same key K)
+  G --> S : POSTED or timeout
+else still unknown
+  S -> Q : enqueue K for reconciliation
+end
+@enduml

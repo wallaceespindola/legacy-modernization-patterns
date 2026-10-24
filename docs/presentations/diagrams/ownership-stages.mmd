@@ -1,0 +1,4 @@
+flowchart LR
+    S1["1. Legacy writes<br/>new = CDC read copy"] --> S2["2. Legacy writes<br/>new computes in shadow"]
+    S2 --> S3["3. New writes<br/>legacy = reverse-sync copy"]
+    S3 --> S4["4. Legacy consumers moved<br/>sync and legacy retired"]

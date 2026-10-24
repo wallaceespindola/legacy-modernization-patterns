@@ -2,7 +2,7 @@
 
 ![Strangle, don't replace](docs/images/banner.png)
 
-[![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE) [![Docs](https://img.shields.io/badge/Written_in-Markdown-000000?logo=markdown)](docs/legacy-modernization-patterns-context.md) [![Diagrams](https://img.shields.io/badge/Diagrams-Mermaid-ff3670?logo=mermaid&logoColor=white)](docs/legacy-modernization-patterns-context.md#2-how-the-patterns-work-together-account-modernization-example) [![Domain](https://img.shields.io/badge/Domain-Banking_%26_Finance-004A97)](docs/legacy-modernization-patterns-context.md) [![Target stack](https://img.shields.io/badge/Target-Java_%7C_Spring_Boot-6db33f?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot) [![DORA](https://img.shields.io/badge/EU-DORA_aware-003399)](https://eur-lex.europa.eu/eli/reg/2022/2554/oj)
+[![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE) [![Docs](https://img.shields.io/badge/Written_in-Markdown-000000?logo=markdown)](docs/legacy-modernization-patterns-context.md) [![Diagrams](https://img.shields.io/badge/Diagrams-Mermaid-ff3670?logo=mermaid&logoColor=white)](docs/legacy-modernization-patterns-context.md#2-how-the-patterns-work-together-account-modernization-example) [![Domain](https://img.shields.io/badge/Domain-Banking_%26_Finance-004A97)](docs/legacy-modernization-patterns-context.md) [![Target stack](https://img.shields.io/badge/Target-Java_%7C_Spring_Boot-6db33f?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot) [![DORA](https://img.shields.io/badge/EU-DORA_aware-003399)](https://eur-lex.europa.eu/eli/reg/2022/2554/oj) [![Java 21](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](examples/account-modernization/) [![docs CI](https://github.com/wallaceespindola/legacy-modernization-patterns/actions/workflows/docs.yml/badge.svg)](https://github.com/wallaceespindola/legacy-modernization-patterns/actions/workflows/docs.yml)
 
 The idea: the Strangler Fig pattern is the right way to modernize a core banking system, but it is only the migration framework. It does not decide what to extract, how to keep old and new data in step, or how to prove the new system gives the same answers as the old one. Those jobs belong to other patterns, and modernization goes wrong when they are missing.
 
@@ -109,28 +109,51 @@ Main sections of the context document:
 - **With an AI assistant:** reference the context file from a `CLAUDE.md` or `.github/copilot-instructions.md`, so the assistant starts from the same vocabulary and cautions.
 - **Writing:** it is the source material for articles and talks on the topic.
 
+## Java examples
+
+[`examples/account-modernization/`](examples/account-modernization/) is a small Java 21 module (Maven, JUnit 5, no Spring, no database) that implements the patterns where the details matter most:
+
+| Package | Pattern | What it shows |
+| --- | --- | --- |
+| `acl` | Anti-Corruption Layer | COMP-3 and EBCDIC decoding, return codes to a sealed result, memo-posted to `PENDING` |
+| `interest` | Branch by Abstraction + Parallel Run | 30/360 and HALF_UP legacy vs ACT/365 and HALF_EVEN modern, legacy served, mismatches classified |
+| `outbox` | Transactional Outbox + Idempotent Consumer | event and state change committed together, at-least-once relay, duplicate-safe consumer |
+| `posting` | Safe financial writes | a timeout as an unknown outcome: status inquiry, one retry with the same key, reconciliation queue |
+
+```bash
+cd examples/account-modernization && mvn verify
+```
+
 ## Repository structure
 
 ```text
 legacy-modernization-patterns/
 ├── README.md                                      This file
-├── Makefile                                       format, lint and link-check targets
+├── CLAUDE.md                                      Guidance for AI assistants working in the repo
+├── Makefile                                       format, lint, links, diagrams, slides, examples
 ├── LICENSE                                        Apache 2.0
+├── .github/workflows/docs.yml                     Markdown lint, link check, Java build
+├── examples/account-modernization/                Java 21 pattern examples with tests
 └── docs/
     ├── legacy-modernization-patterns-context.md   Pattern catalog and context
-    └── images/banner.png                          Project banner
+    ├── images/banner.png                          Project banner
+    ├── articles/                                  Platform articles, banners and diagrams
+    └── presentations/                             Marp deck, PPTX, PDF, diagrams, import guide
 ```
 
 ## Working with the docs
 
 ```bash
-make format   # Prettier, one line per paragraph
-make lint     # markdownlint-cli2
-make links    # lychee offline link check (needs lychee installed)
-make check    # lint + links
+make format     # Prettier, one line per paragraph
+make lint       # markdownlint-cli2
+make links      # lychee offline link check (needs lychee installed)
+make diagrams   # render .mmd and .puml sources to PNG
+make slides     # export the Marp deck to PDF and PPTX
+make examples   # mvn verify in the Java module
+make check      # lint + links + examples
 ```
 
-Diagrams are Mermaid blocks inside the Markdown, so GitHub renders them directly.
+Diagrams are Mermaid and PlantUML sources with rendered PNGs next to them. The talk deck is in `docs/presentations/` (see its [import guide](docs/presentations/GOOGLE_SLIDES.md) for Google Slides, Keynote and Speaker Deck).
 
 ## Related reading
 

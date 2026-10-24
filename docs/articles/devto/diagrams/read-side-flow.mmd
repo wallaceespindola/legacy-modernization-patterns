@@ -1,0 +1,8 @@
+flowchart LR
+    MF[("COBOL ledger<br/>memo-post intraday,<br/>hard-post end of day")] -->|"CDC, per account order"| TX["Translation<br/>ACL for data"]
+    TX --> RM[("Read model<br/>PENDING + POSTED")]
+    Facade["Facade<br/>GET balance"] --> Lag{"CDC lag<br/>within SLO?"}
+    Lag -->|"yes"| Inquiry["Account inquiry<br/>service"]
+    Inquiry --> RM
+    Lag -->|"no, fall back"| ACL["ACL<br/>legacy call"]
+    ACL --> MF

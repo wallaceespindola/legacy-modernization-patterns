@@ -1,0 +1,55 @@
+@startuml module-components
+' Components of examples/account-modernization by package and pattern
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam packageBorderColor #555555
+
+actor "Modern service\n(caller)" as caller
+database "COBOL core\n(CICS / ledger)" as core
+queue "Broker" as broker
+
+package "acl\nAnti-Corruption Layer" {
+  [LegacyAccountRecord\nIBM037 layout] as rec
+  [PackedDecimal\nCOMP-3 decode] as pd
+  [AccountTranslator\nsealed AccountLookup] as tr
+}
+
+package "interest\nBranch by Abstraction + Parallel Run" {
+  [InterestCalculatorToggle\nLEGACY / SHADOW / MODERN] as tg
+  [ParallelRun\nserves legacy, classifies] as pr
+  [LegacyInterestCalculator\n30/360, HALF_UP] as li
+  [ModernInterestCalculator\nACT/365, HALF_EVEN] as mi
+}
+
+package "outbox\nTransactional Outbox" {
+  [InMemoryUnitOfWork\nledger + outbox rows] as uow
+  [OutboxRelay\nat-least-once] as relay
+  [IdempotentConsumer\ninbox of event ids] as ic
+}
+
+package "posting\nSafe financial writes" {
+  [SafePostingClient\nunknown outcome] as spc
+  [ReconciliationQueue] as rq
+  interface "PostingGateway\n(port)" as pg
+}
+
+core --> rec : raw bytes
+rec --> pd
+tr --> rec
+caller --> tr : translate()
+caller --> tg : monthlyInterest()
+tg --> pr
+tg --> li
+tg --> mi
+pr --> li
+pr --> mi
+caller --> uow : execute()
+relay --> uow : unpublished()
+relay --> broker : publish()
+broker --> ic : redelivery is harmless
+caller --> spc : post()
+spc --> pg
+spc --> rq : park Unknown
+pg ..> core : adapter (not in module)
+@enduml

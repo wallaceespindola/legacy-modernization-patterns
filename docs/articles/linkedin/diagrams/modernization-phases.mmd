@@ -1,0 +1,11 @@
+flowchart LR
+    P0["0. Discover<br/><i>pick one capability</i>"] --> P1["1. Encapsulate<br/><i>facade as pass-through</i>"]
+    P1 --> P2["2. Build read side<br/><i>reconciles within tolerance</i>"]
+    P2 --> P3["3. Prove<br/><i>differences signed off</i>"]
+    P3 --> P4["4. Shift reads<br/><i>rollback tested</i>"]
+    P4 --> P5["5. Extend<br/><i>shadow, canary, cutover</i>"]
+    P5 --> P6["6. Decommission<br/><i>books balance, sign-off</i>"]
+    classDef done fill:#e8f1fb,stroke:#2b6cb0,color:#1a202c
+    classDef gate fill:#fdf2e9,stroke:#c05621,color:#1a202c
+    class P0,P1,P2,P3,P4,P5 done
+    class P6 gate

@@ -1,0 +1,6 @@
+flowchart LR
+    A["Shadow<br/>new result discarded, compared"] --> B["Canary<br/>small segment served by new"]
+    B --> C["Cutover<br/>all traffic on new"]
+    C --> D["Rollback window<br/>legacy kept warm"]
+    D --> E[Decommission]
+    B -. mismatches above threshold .-> A

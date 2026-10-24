@@ -1,0 +1,10 @@
+flowchart LR
+    R["Routing<br/>who answers the call"] ~~~ R1["Legacy facade<br/>Strangler Fig"] ~~~ R2["Toggles and canary<br/>per operation"] ~~~ R3["Event interception<br/>CDC or MQ"]
+    T["Translation<br/>what the data means"] ~~~ T1["Bounded contexts<br/>DDD context map"] ~~~ T2["Anti-corruption layer<br/>codes, types, semantics"] ~~~ T3["Versioned contracts<br/>no business logic"]
+    D["Data movement<br/>who owns the record"] ~~~ D1["CDC + CQRS<br/>read model"] ~~~ D2["Outbox +<br/>idempotent consumer"] ~~~ D3["Reverse sync<br/>to legacy consumers"]
+    P["Proof<br/>is it equivalent"] ~~~ P1["Characterization<br/>tests"] ~~~ P2["Parallel run<br/>with triage"] ~~~ P3["Financial<br/>reconciliation"]
+    S["Resilience<br/>what if a call fails"] ~~~ S1["Idempotency key +<br/>status inquiry"] ~~~ S2["Circuit breaker<br/>and bulkheads"] ~~~ S3["Correlation IDs<br/>across both stacks"]
+    classDef concern fill:#1f3a5f,stroke:#1f3a5f,color:#ffffff
+    classDef pattern fill:#f3f6fa,stroke:#7a8ca5,color:#1b2a40
+    class R,T,D,P,S concern
+    class R1,R2,R3,T1,T2,T3,D1,D2,D3,P1,P2,P3,S1,S2,S3 pattern

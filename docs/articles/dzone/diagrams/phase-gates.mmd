@@ -1,0 +1,26 @@
+flowchart TB
+    subgraph R1[" "]
+        direction LR
+        P0["0. Discover<br/>contexts, CDC feasibility,<br/>baseline MIPS"] -->|"gate: first capability<br/>selected"| P1["1. Encapsulate<br/>ACL + pass-through facade,<br/>correlation IDs"]
+        P1 -->|"gate: all traffic via facade,<br/>no behavior change"| P2["2. Build read side<br/>CDC, read model,<br/>lag SLO + fallback"]
+        P2 -->|"gate: reconciles over<br/>N days incl. month-end"| P3["3. Prove<br/>parallel run,<br/>discrepancy triage"]
+    end
+    subgraph R2[" "]
+        direction LR
+        P4["4. Shift reads<br/>canary to 100%,<br/>legacy fallback kept"] -->|"gate: SLOs hold,<br/>rollback tested"| P5["5. Extend<br/>outbox, events,<br/>branch by abstraction"]
+        P5 -->|"gate: each replacement<br/>shadow, canary, cutover"| P6["6. Decommission<br/>remove legacy path<br/>and scaffolding"]
+        P6 -->|"gate: books balance,<br/>evidence filed, sign-off"| Done(["Capability done"])
+    end
+    R1 -->|"gate after 3: mismatches below threshold, differences signed off"| R2
+
+    classDef build fill:#dbeafe,stroke:#1d4ed8,color:#0f172a
+    classDef prove fill:#fef3c7,stroke:#b45309,color:#0f172a
+    classDef move fill:#dcfce7,stroke:#15803d,color:#0f172a
+    classDef done fill:#1e293b,stroke:#1e293b,color:#ffffff
+    class P0,P1,P2 build
+    class P3 prove
+    class P4,P5 move
+    class P6 done
+    class Done done
+    style R1 fill:#ffffff,stroke:#ffffff
+    style R2 fill:#ffffff,stroke:#ffffff

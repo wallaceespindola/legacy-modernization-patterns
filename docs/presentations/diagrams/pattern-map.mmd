@@ -1,0 +1,12 @@
+flowchart LR
+    Client[Mobile / Web] --> GW["Legacy facade<br/>Strangler Fig routing"]
+    GW -->|new reads| Inquiry["Account Inquiry<br/>Java service"]
+    GW -->|legacy paths, fallback| ACL[Anti-Corruption Layer]
+    ACL --> MF[("Mainframe COBOL/CICS<br/>ledger = system of record")]
+    MF -->|CDC| TX[Translation]
+    TX --> Read[("Read model<br/>pending + posted")]
+    Inquiry --> Read
+    Inquiry -. parallel run .-> ACL
+    Inquiry -->|outbox| Bus[[Event bus]]
+    Recon[Reconciliation] -.-> MF
+    Recon -.-> Read

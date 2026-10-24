@@ -1,0 +1,17 @@
+---
+config:
+  xyChart:
+    width: 900
+    height: 420
+    yAxis:
+      showLabel: false
+      showTick: false
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#3b6ea8"
+---
+xychart-beta
+    title "Where the effort sits in one capability's migration (illustrative, not measured)"
+    x-axis ["Routing", "Read side + sync", "Proof", "Ownership transfer", "Teardown"]
+    y-axis "Relative effort (illustrative)" 0 --> 10
+    bar [2, 6, 8, 9, 5]

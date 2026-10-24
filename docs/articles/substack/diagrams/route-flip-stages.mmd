@@ -1,0 +1,10 @@
+flowchart LR
+    S["<b>Shadow</b><br/>Customer gets: legacy<br/>New: computed, compared,<br/>result thrown away"]
+    C["<b>Canary</b><br/>Customer gets: new,<br/>small segment only<br/>Legacy: still computed, compared"]
+    F["<b>Cutover</b><br/>Customer gets: new, everyone<br/>Legacy: kept warm"]
+    R["<b>Rollback window closes</b><br/>Legacy path removed<br/>after sign-off"]
+    S -->|"every mismatch explained<br/>month-end included"| C
+    C -->|"SLOs hold,<br/>rollback rehearsed"| F
+    F -->|"window ends,<br/>reconciliation clean"| R
+    C -. "unexplained mismatch:<br/>flip the route back" .-> S
+    F -. "problem: routing change,<br/>not a deployment" .-> S

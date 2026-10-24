@@ -1,0 +1,37 @@
+@startuml unknown-outcome-posting
+' SafePostingClient: timeout means unknown, ask before retrying
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+participant "Caller" as C
+participant "SafePostingClient" as S
+participant "PostingGateway\n(ledger port)" as G
+participant "ReconciliationQueue" as Q
+
+C -> S : post(request with idempotencyKey)
+S -> G : post(request)
+G --x S : PostingTimeoutException
+note right of S : Outcome unknown,\nnot failed
+S -> G : status(idempotencyKey)
+alt ledger has the key
+  G --> S : PostingStatus
+  S --> C : Posted (no second post)
+else key not found
+  S -> G : post(request) same key, once
+  alt posted
+    G --> S : Posted
+    S --> C : Posted
+  else second timeout
+    G --x S : PostingTimeoutException
+    S -> G : status(idempotencyKey)
+    alt ledger has the key
+      G --> S : PostingStatus
+      S --> C : Posted (no third attempt)
+    else still unknown
+      S -> Q : add(request)
+      S --> C : Unknown(idempotencyKey)
+    end
+  end
+end
+@enduml

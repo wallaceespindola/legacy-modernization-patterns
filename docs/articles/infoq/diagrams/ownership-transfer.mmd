@@ -1,0 +1,13 @@
+flowchart TB
+    A["Stage 1<br/>Legacy writes<br/>New: CDC read copy"]
+    B["Stage 2<br/>Legacy writes<br/>New: shadow compute"]
+    C["Stage 3<br/>New writes<br/>Legacy: reverse-sync copy"]
+    D["Stage 4<br/>Legacy consumers moved<br/>Sync and legacy path retired"]
+    A -->|"gate: read model reconciles<br/>over N business days,<br/>month-end included"| B
+    B -->|"gate: mismatches explained,<br/>signed off, rollback tested"| C
+    C -->|"gate: batch, reports and<br/>regulatory feeds migrated"| D
+    C -. "rollback needs data<br/>flowing back to legacy" .-> B
+    classDef legacy fill:#e8eef7,stroke:#3b5b8c,color:#1b2a40
+    classDef modern fill:#e6f4ea,stroke:#2e7d4f,color:#123b22
+    class A,B legacy
+    class C,D modern

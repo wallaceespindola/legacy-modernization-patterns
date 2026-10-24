@@ -1,0 +1,11 @@
+flowchart LR
+    P["Post with<br/>idempotency key"] --> Q{"Response?"}
+    Q -->|posted| OK["Posted<br/>ledger reference"]
+    Q -->|timeout| S1{"Status inquiry<br/>by key"}
+    S1 -->|found| OK
+    S1 -->|"not found"| RT["Retry once,<br/>same key"]
+    RT --> Q2{"Response?"}
+    Q2 -->|posted| OK
+    Q2 -->|timeout| S2{"Status inquiry<br/>by key"}
+    S2 -->|found| OK
+    S2 -->|"still not found"| RQ["Reconciliation queue<br/>result = Unknown"]

@@ -1,0 +1,10 @@
+flowchart LR
+    S1["Stage 1<br/>Writer: legacy<br/>New: CDC read copy"] -->|"gate: read model<br/>reconciles"| S2["Stage 2<br/>Writer: legacy<br/>New: computes in shadow,<br/>reconciled daily"]
+    S2 -->|"gate: shadow clean,<br/>reverse sync tested,<br/>risk sign-off"| S3["Stage 3<br/>Writer: new service<br/>Legacy: reverse-sync copy"]
+    S3 -->|"gate: batch, reports and<br/>regulatory feeds migrated"| S4["Stage 4<br/>Writer: new service<br/>Reverse sync and<br/>legacy path retired"]
+    S3 -.->|"rollback: ownership back<br/>to legacy, data flows back"| S2
+
+    classDef legacy fill:#e0e7ff,stroke:#4338ca,color:#0f172a
+    classDef modern fill:#dcfce7,stroke:#15803d,color:#0f172a
+    class S1,S2 legacy
+    class S3,S4 modern
