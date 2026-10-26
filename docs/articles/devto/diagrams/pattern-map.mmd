@@ -1,10 +1,19 @@
-flowchart LR
-    Client["Mobile / web"] --> Facade["Strangler facade<br/>routes per operation"]
-    Facade -->|"legacy path"| ACL["ACL<br/>acl package<br/>COMP-3, codes, POSTED/PENDING"]
-    ACL --> MF[("COBOL core<br/>ledger = system of record")]
-    Facade -->|"shadow, then canary"| PR["Parallel run<br/>interest package<br/>compare, classify, serve legacy"]
-    PR --> ACL
-    PR --> New["Modern service"]
-    New -->|"same transaction"| OB[("Outbox table")]
-    OB -->|"relay, at least once"| Bus[["Event bus"]]
-    Bus --> IC["Idempotent consumer<br/>outbox package"]
+flowchart TB
+    subgraph Route["Routing"]
+        direction LR
+        Client["Mobile / web"] --> Facade["Strangler facade<br/>routes per operation"]
+        Facade -->|"shadow, then canary"| PR["Parallel run<br/>interest package<br/>compare, classify, serve legacy"]
+    end
+    subgraph Legacy["Legacy path"]
+        direction LR
+        ACL["ACL<br/>acl package<br/>COMP-3, codes, POSTED/PENDING"] --> MF[("COBOL core<br/>ledger = system of record")]
+    end
+    subgraph Modern["Modern path"]
+        direction LR
+        New["Modern service"] -->|"same transaction"| OB[("Outbox table")]
+        OB -->|"relay, at least once"| Bus[["Event bus"]]
+        Bus --> IC["Idempotent consumer<br/>outbox package"]
+    end
+    Route -->|"legacy path"| Legacy
+    Route -->|"modern result"| Modern
+    Legacy ~~~ Modern

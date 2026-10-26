@@ -1,37 +1,37 @@
+<!-- JAVAPRO: tell the editor the draft is visible in the public repo, or make the article private until publication. -->
+
 ![Banner with the words Proven in Java over two crossing streams of pink and blue light on a dark background](banner.png)
 
-# From COBOL behavior to tested Java: an anti-corruption layer, a parallel run and safe posting
+# From COBOL behavior to tested Java: ACL, parallel run, safe posting
 
 **By Wallace Espindola, Solution Architect**
 <wallace.espindola@gmail.com> | [LinkedIn](https://www.linkedin.com/in/wallaceespindola/) | [GitHub](https://github.com/wallaceespindola/)
 
-*I wrote this article with AI assistance, then reviewed, fact-checked and edited it myself. It is original to JAVAPRO and not republished from another site.*
+*I wrote this article with AI assistance, then reviewed, fact-checked and edited it myself. It is written for JAVAPRO and has not been published on any other site. The draft lives in the public examples repository.*
 
 ---
 
 ## Abstract
 
-A Strangler Fig migration of a COBOL core banking system replaces one capability at a time, and the hard part is the period when old and new coexist. This article walks through a small Java 21 module that implements four patterns for that period: an anti-corruption layer that decodes an EBCDIC record with a COMP-3 balance, Branch by Abstraction with a parallel run that compares legacy and modern interest calculations, a transactional outbox with an idempotent consumer, and a posting client that treats a timeout as an unknown outcome. For each package I show the code, explain the design choice and map the tests to the behavior they pin down.
+A Strangler Fig migration of a COBOL core replaces one capability at a time, and the hard part is the period when old and new coexist. This article walks through a Java 21 module with four patterns for that period: an anti-corruption layer for an EBCDIC record, Branch by Abstraction with a parallel run, a transactional outbox with an idempotent consumer and a posting client that treats a timeout as an unknown outcome. For each package I show the code, the design choice and the tests.
 
 ---
 
 ## Introduction
 
-A bank that strangles its core one capability at a time ends up with Java services that read COBOL records, recompute numbers the mainframe already computes, publish events and post money over links that sometimes time out. Each piece is a few dozen lines, and each one is easy to get subtly wrong. This article is for the people who will read the diff.
+A bank that strangles its core one capability at a time ends up with Java services that read COBOL records, recompute numbers the mainframe already computes, publish events and post money over links that sometimes time out. Each piece is a few dozen lines and easy to get subtly wrong. This article is for the people who will read the diff.
 
-The [legacy-modernization-patterns](https://github.com/wallaceespindola/legacy-modernization-patterns) repository holds the series context and a Maven module, `examples/account-modernization/`, with four packages: `acl`, `interest`, `outbox` and `posting`. It is plain Java 21 with JUnit 5 and AssertJ, 36 tests, no Spring and no database, so `mvn verify` runs offline in seconds. The code is illustrative, not lifted from a production system, and the record layout is a simplified copybook I made up for the example.
+The [legacy-modernization-patterns](https://github.com/wallaceespindola/legacy-modernization-patterns) repository holds the series context and a Maven module, `examples/account-modernization/`, with four packages: `acl`, `interest`, `outbox` and `posting`. It is plain Java 21 with JUnit 5 and AssertJ, 36 tests, no Spring and no database, so `mvn verify` runs offline in seconds. The code and the copybook layout are illustrative, made up for the example.
 
-For the step before any of this, understanding what the legacy system does, see my earlier [Dev.to piece](https://dev.to/wallaceespindola/stop-rewriting-legacy-systems-use-ai-to-understand-them-first-21ba). Here I stay in the code.
+For the step before any of this, understanding what the legacy system does, see my earlier [Dev.to piece](https://dev.to/wallaceespindola/stop-rewriting-legacy-systems-use-ai-to-understand-them-first-21ba).
 
 ## Design choices and why
 
-Three choices shape every listing below.
-
-**Records and sealed interfaces for outcomes:** a legacy return code or an uncertain write becomes a closed set of types. A `switch` over a sealed interface is checked for exhaustiveness by the compiler, so a new outcome breaks the build instead of falling through to a default branch.
+**Records and sealed interfaces for outcomes:** a legacy return code or an uncertain write becomes a closed set of types. The compiler checks a `switch` over a sealed interface for exhaustiveness, so a new outcome breaks the build.
 
 **No framework, no database:** the patterns are about ordering, atomicity and semantics. An in-memory unit of work shows the outbox contract more plainly than `@Transactional` would, and keeps tests deterministic.
 
-**Ports where a framework would plug in:** in a hexagonal layout, `PostingGateway` and `Publisher` are ports. A Spring Boot service would add the adapters: a z/OS Connect or IBM MQ client behind `PostingGateway`, a Kafka or JMS template behind `Publisher`, a JDBC repository behind the unit of work, and configuration that sets the toggle mode. The domain code in the module would not change.
+**Ports where a framework would plug in:** in a hexagonal layout, `PostingGateway` and `Publisher` are ports. A Spring Boot service would add the adapters: a z/OS Connect or IBM MQ client behind `PostingGateway`, a Kafka or JMS template behind `Publisher`, a JDBC repository behind the unit of work and configuration that sets the toggle mode. The domain code in the module would not change.
 
 ![Component diagram of the account-modernization module: acl, interest, outbox and posting packages, the classes in each, and how a modern service, the COBOL core and a broker connect to them](diagrams/module-components.png)
 
@@ -84,7 +84,7 @@ public final class PackedDecimal {
 }
 ```
 
-The scale is a parameter because COMP-3 has no decimal point. The copybook's `V99` lives in documentation, not in the bytes. Every invalid nibble throws, because a decoder that quietly maps `0xA` to zero produces a plausible wrong balance.
+The scale is a parameter because COMP-3 has no decimal point. The implied decimal point (`V99`) lives in the copybook's PIC clause, not in the bytes. Every invalid nibble throws, because a decoder that quietly maps `0xA` to zero produces a plausible wrong balance.
 
 The record itself is fixed width: a 10-byte account id, a 1-byte type flag, a 7-byte packed balance and a 2-byte return code, all in EBCDIC. Here is `acl/LegacyAccountRecord.java`, imports trimmed:
 
@@ -119,7 +119,7 @@ public record LegacyAccountRecord(String accountId, char typeFlag, BigDecimal ba
 }
 ```
 
-The record keeps the legacy vocabulary on purpose (`typeFlag`, `returnCode`). It is parsed, not interpreted. One deployment detail for the diff reader: IBM037 is in the JDK's extended encoding set, which [Oracle's supported encodings page](https://docs.oracle.com/en/java/javase/21/intl/supported-encodings.html) places in the `jdk.charsets` module. A trimmed `jlink` image without that module fails at class initialization, so add it explicitly.
+The record keeps the legacy vocabulary on purpose (`typeFlag`, `returnCode`), because interpretation belongs to the translator. IBM037 is in the JDK's extended encoding set, which [Oracle's supported encodings page](https://docs.oracle.com/en/java/javase/21/intl/supported-encodings.html) places in the `jdk.charsets` module. A trimmed `jlink` image without that module fails at class initialization, so add it explicitly.
 
 Interpretation happens in the translator. `AccountLookup` is a sealed interface with three records, `Found(AccountBalance)`, `NotFound(accountId)` and `Blocked(accountId)`, and the type flag becomes an explicit `BalanceType`. Here is `acl/AccountTranslator.java`, package and imports trimmed:
 
@@ -157,7 +157,7 @@ Business outcomes (not found, blocked) are values, and technical failures (unkno
 
 ## Package interest: Branch by Abstraction and a parallel run
 
-[Branch by Abstraction](https://martinfowler.com/bliki/BranchByAbstraction.html) puts an interface in front of logic that gateway routing can't isolate. Here the seam is `InterestCalculator`, with one method, `monthlyInterest(BigDecimal balance, BigDecimal annualRate, YearMonth month)`. The two implementations differ in day count, intermediate truncation and rounding mode. Here are the method bodies of `interest/LegacyInterestCalculator.java` and `interest/ModernInterestCalculator.java`, trimmed to the methods (constants as in the files: 30 and 360 days, work scale 4, result scale 2 for legacy; 365 days and result scale 2 for modern):
+[Branch by Abstraction](https://martinfowler.com/bliki/BranchByAbstraction.html) puts an interface in front of logic that gateway routing can't isolate. Here the seam is the one-method `InterestCalculator` interface. The two implementations differ in day count, intermediate truncation and rounding mode. Here are the method bodies of `interest/LegacyInterestCalculator.java` and `interest/ModernInterestCalculator.java`, trimmed to the methods. In the files, the legacy constants are 30 and 360 days, a work scale of 4 and a result scale of 2. The modern ones are 365 days and a result scale of 2:
 
 ```java
     @Override
@@ -179,7 +179,7 @@ Business outcomes (not found, blocked) are values, and technical failures (unkno
     }
 ```
 
-The legacy version mirrors typical COBOL arithmetic: 30/360 day count, an intermediate field with four decimals that truncates (`RoundingMode.DOWN`), then `ROUNDED`, which is half-up. The modern version uses actual days over 365, keeps full precision and rounds half-even. Neither is wrong. They are different contracts, and the parallel run exists to make the difference visible before anyone routes money through the new one.
+The legacy version mirrors typical legacy core-banking arithmetic: a 30/360 day count, an intermediate field with four decimals that truncates (`RoundingMode.DOWN`), then `ROUNDED`, which is half-up. The modern version uses actual days over 365, keeps full precision and rounds half-even. Neither is wrong. They are different contracts, and the parallel run exists to make the difference visible before anyone routes money through the new one.
 
 Here is `interest/ParallelRun.java`, trimmed to the comparison and classification logic:
 
@@ -213,11 +213,29 @@ Here is `interest/ParallelRun.java`, trimmed to the comparison and classificatio
     }
 ```
 
-The method always returns `legacyResult`, so shadow mode never changes what customers see. `ParallelRun` implements the same interface and slots into the seam like any other calculator. Its comparisons feed `ParallelRunReport`, an `EnumMap` of counts per category. Categories beat a raw mismatch rate: a reviewer can sign off "day count, expected" in bulk and spend time on `UNEXPLAINED`.
+The method always returns `legacyResult`, so shadow mode never changes what customers see. Its comparisons feed `ParallelRunReport`, an `EnumMap` of counts per category. Categories beat a raw mismatch rate: a reviewer can sign off "day count, expected" in bulk and spend time on `UNEXPLAINED`.
 
-Two things I'd flag in review. If the modern calculator throws, the exception reaches the caller. In production you'd catch it, record it and still return the legacy value. And the classifier is a heuristic: one cent is checked before the tolerance, so with a tolerance of `0.01` nothing lands in `WITHIN_TOLERANCE`, as one test asserts.
+In review I'd flag two things. If the modern calculator throws, the exception reaches the caller, so in production you'd catch it, record it and still return the legacy value. And the classifier is a heuristic: one cent is checked before the tolerance, so with a tolerance of `0.01` nothing lands in `WITHIN_TOLERANCE`, as one test asserts.
 
-`InterestCalculatorToggle` picks the path. It holds a `volatile Mode` (`LEGACY`, `SHADOW`, `MODERN`), switches over it to choose `legacy`, the `ParallelRun` or `modern`, and exposes `switchTo` so every step is reversible. In a Spring Boot service the mode would come from configuration or a feature-flag client.
+`InterestCalculatorToggle` picks the path from a `volatile Mode` (`LEGACY`, `SHADOW`, `MODERN`). Here are its `monthlyInterest` and `switchTo` methods from `interest/InterestCalculatorToggle.java`:
+
+```java
+    @Override
+    public BigDecimal monthlyInterest(BigDecimal balance, BigDecimal annualRate, YearMonth month) {
+        InterestCalculator target = switch (mode) {
+            case LEGACY -> legacy;
+            case SHADOW -> shadow;
+            case MODERN -> modern;
+        };
+        return target.monthlyInterest(balance, annualRate, month);
+    }
+
+    public void switchTo(Mode newMode) {
+        this.mode = newMode;
+    }
+```
+
+The `shadow` field is the `ParallelRun`, and `switchTo` makes every step reversible. In a Spring Boot service the mode would come from configuration or a feature-flag client.
 
 ## Mapping tests to behavior
 
@@ -253,7 +271,7 @@ January has 31 days, so ACT/365 gives 4.25 against the legacy 4.17, and the call
 
 ## Package outbox: commit the event with the change
 
-The [transactional outbox](https://github.com/wallaceespindola/legacy-modernization-patterns/blob/main/docs/legacy-modernization-patterns-context.md) writes the business change and the event row in one local transaction, then publishes asynchronously. `InMemoryUnitOfWork` stands in for the database. Here is its `execute` method, trimmed from `outbox/InMemoryUnitOfWork.java`:
+The [transactional outbox](https://microservices.io/patterns/data/transactional-outbox.html) writes the business change and the event row in one local transaction, then publishes asynchronously. `InMemoryUnitOfWork` stands in for the database. Here is its `execute` method, trimmed from `outbox/InMemoryUnitOfWork.java`:
 
 ```java
     public void execute(Consumer<Work> body) {
@@ -291,7 +309,7 @@ The relay reads unpublished rows and pushes them to a `Publisher`. Here is `rela
     }
 ```
 
-`markPublished` runs only after a successful publish, and the loop stops at the first failure to keep commit order. A crash between the two sends the event again on the next run: at-least-once delivery, which is why the consumer side exists. Here is `accept` from `outbox/IdempotentConsumer.java`:
+`markPublished` runs only after a successful publish. A crash between the two sends the event again on the next run: at-least-once delivery, which is why the consumer side exists. Here is `accept` from `outbox/IdempotentConsumer.java`:
 
 ```java
     /** Returns true when the event was handled, false when it was a duplicate. */
@@ -309,7 +327,7 @@ The event id goes into the inbox after the handler succeeds, so a failing handle
 
 ## Package posting: a timeout is not a failure
 
-A posting over the network can end posted, rejected or unknown, and a blind retry on timeout risks a double debit. `SafePostingClient` asks the ledger first, using the idempotency key the request carries end to end. Here is the class body of `posting/SafePostingClient.java`, with the package, imports, fields and constructor trimmed:
+A posting over the network can end posted, rejected or unknown, and a blind retry on timeout risks a double debit. `SafePostingClient` asks the ledger first, using the idempotency key the request carries end to end. Here is `posting/SafePostingClient.java` without the package, imports, fields and constructor:
 
 ```java
     public PostingResult post(PostingRequest request) {
@@ -343,9 +361,9 @@ A posting over the network can end posted, rejected or unknown, and a blind retr
     }
 ```
 
-`PostingResult` is a sealed interface with two records, `Posted` and `Unknown`. There is deliberately no `Failed`: after a timeout the client doesn't know, and the type says so. The flow is status inquiry, one retry with the same key, a second inquiry, then the `ReconciliationQueue`, a parking list that a reconciliation job drains against the ledger. In a hexagonal Spring Boot service, `PostingGateway` is the port, and its adapter would call the mainframe (for example through [IBM z/OS Connect](https://www.ibm.com/products/zos-connect-enterprise-edition)) and turn a socket or HTTP timeout into `PostingTimeoutException`. A circuit breaker around it is fine, but it must not add retries of its own.
+`PostingResult` is a sealed interface with two records, `Posted` and `Unknown`. There is deliberately no `Failed`: after a timeout the client doesn't know, and the type says so. The flow is status inquiry, one retry with the same key, a second inquiry, then the `ReconciliationQueue`, a parking list that a reconciliation job drains against the ledger. The `PostingGateway` adapter would call the mainframe (for example through [IBM z/OS Connect](https://www.ibm.com/products/zos-connect-enterprise-edition)) and turn a socket or HTTP timeout into `PostingTimeoutException`. A circuit breaker around it is fine, but it must not add retries of its own.
 
-![Sequence diagram of SafePostingClient: a timeout triggers a status inquiry, one retry with the same idempotency key, a second inquiry, and parking in the reconciliation queue when the outcome is still unknown](diagrams/unknown-outcome-posting.png)
+![Sequence diagram of SafePostingClient: a timeout triggers a status inquiry, one retry with the same idempotency key, a second inquiry and parking in the reconciliation queue when the outcome is still unknown](diagrams/unknown-outcome-posting.png)
 
 The test I'd read first is the one that proves no second post happens when the ledger already applied the first, from `SafePostingClientTest`:
 
@@ -362,7 +380,7 @@ The test I'd read first is the one that proves no second post happens when the l
     }
 ```
 
-`FakeGateway` is an idempotent fake ledger whose first N calls time out, optionally after applying the posting. The other tests cover the happy path, a same-key retry that posts once, two timeouts ending in `Unknown` with a queued request, and a timed-out retry the ledger did apply, which returns `Posted` without a third attempt.
+`FakeGateway` is an idempotent fake ledger whose first N calls time out, optionally after applying the posting. The other tests cover the happy path, a same-key retry that posts once, two timeouts ending in `Unknown` with a queued request and a timed-out retry the ledger did apply, which returns `Posted` without a third attempt.
 
 ## Limits of the module
 
@@ -370,9 +388,9 @@ The module covers behavior and leaves operations out. Without persistence, the o
 
 ## Wrapping up
 
-Each package turns one piece of legacy behavior into a typed, tested contract: a sealed lookup result, measurable calculation differences, events as durable as their change, and a posting client that refuses to guess. The [Strangler Fig](https://martinfowler.com/bliki/StranglerFigApplication.html) gives the migration its shape, and contracts like these are what you test while old and new run side by side.
+Each package turns one piece of legacy behavior into a typed, tested contract: a sealed lookup result, measurable calculation differences, events as durable as their change and a posting client that refuses to guess. The [Strangler Fig](https://martinfowler.com/bliki/StranglerFigApplication.html) gives the migration its shape, and contracts like these are what you test while old and new run side by side.
 
-Clone the repository, run `mvn verify` in `examples/account-modernization`, and break something on purpose: drop the `status` lookup in `SafePostingClient` and watch `post_timeoutButPosted_returnsStatusWithoutSecondPost` fail. Which of these four contracts would you check first in your own migration?
+Clone the repository, run `mvn verify` in `examples/account-modernization` and break something on purpose: drop the `status` lookup in `SafePostingClient` and watch `post_timeoutButPosted_returnsStatusWithoutSecondPost` fail. Which of these four contracts would you check first in your own migration?
 
 ## References
 
@@ -381,21 +399,19 @@ Clone the repository, run `mvn verify` in `examples/account-modernization`, and 
 - Martin Fowler, Branch by Abstraction (7 January 2014), [martinfowler.com](https://martinfowler.com/bliki/BranchByAbstraction.html)
 - Ian Cartwright, Rob Horn, James Lewis, Patterns of Legacy Displacement (first published 20 July 2021), [martinfowler.com](https://martinfowler.com/articles/patterns-legacy-displacement/)
 - Oracle, Java SE 21 Supported Encodings, [docs.oracle.com](https://docs.oracle.com/en/java/javase/21/intl/supported-encodings.html)
-- Eric Evans, Domain-Driven Design (2003): Anti-Corruption Layer
-- Chris Richardson, Microservices Patterns (2018): Transactional Outbox, Idempotent Consumer
-- Alistair Cockburn, Hexagonal Architecture (Ports and Adapters)
+- Eric Evans, Domain-Driven Design (2003): Anti-Corruption Layer, [domainlanguage.com](https://www.domainlanguage.com/ddd/)
+- Chris Richardson, Microservices Patterns (2018): Transactional Outbox, Idempotent Consumer, [microservices.io](https://microservices.io/patterns/)
+- Alistair Cockburn, Hexagonal Architecture (Ports and Adapters, 2005), [alistair.cockburn.us](https://alistair.cockburn.us/hexagonal-architecture/)
 
 ---
 
 ## Author bio
 
-Wallace Espindola is a senior software engineer and solution architect working with Java/Spring Boot, Python/FastAPI and cloud-native microservices on Kubernetes and OpenShift. He designs backend systems and their integration boundaries, and writes about legacy modernization and incremental migration.
-
-Reach him on [LinkedIn](https://www.linkedin.com/in/wallaceespindola/) or check out his projects on [GitHub](https://github.com/wallaceespindola/).
+Wallace Espindola is a solution architect working with Java/Spring Boot, Python/FastAPI and cloud-native microservices on Kubernetes and OpenShift. He designs backend systems and their integration boundaries and writes about legacy modernization and incremental migration.
 
 ---
 
-Examples repository: <https://github.com/wallaceespindola/legacy-modernization-patterns>
+**Examples repository:** <https://github.com/wallaceespindola/legacy-modernization-patterns>
 
 Need more tech insights?
 Check out my GitHub, LinkedIn, and Speaker Deck.

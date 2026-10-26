@@ -3,10 +3,10 @@ author: Wallace Espindola
 email: wallace.espindola@gmail.com
 linkedin: https://www.linkedin.com/in/wallaceespindola/
 github: https://github.com/wallaceespindola/
-description: What a CTO, head of engineering or modernization lead decides and funds when modernizing a core banking mainframe one capability at a time, from coexistence and teardown budgets to cutover gates and a low-risk pilot.
+description: What a CTO or modernization lead decides and funds to modernize a core banking mainframe one capability at a time.
 ---
 
-# Modernize one capability at a time. Fund the coexistence, too
+# Modernize one capability at a time, and fund the coexistence
 
 ![Abstract banner for an article on modernizing core banking one capability at a time](banner.png)
 
@@ -14,9 +14,9 @@ Most banks that run a COBOL core on a mainframe have already had the rewrite con
 
 What sits between the first route and the last teardown is harder: a period when two systems run side by side, share data and both need to be correct. Someone has to decide, fund and govern that period, and those calls usually sit with the CTO, the head of engineering or the modernization lead. This article covers them. The patterns, the Java examples and the phased plan behind it are in [legacy-modernization-patterns on GitHub](https://github.com/wallaceespindola/legacy-modernization-patterns).
 
-## The decision is per capability, not per system
+## Decide per capability
 
-"Should we leave the mainframe?" is the wrong question for a funding meeting, because it forces one answer for everything. A core banking estate is a set of capabilities: account inquiry, ledger posting, interest, statements, customer data, notifications. Each one deserves its own decision, using the same options the industry already uses (retire, retain, rehost, replatform, repurchase, refactor).
+"Should we leave the mainframe?" forces one answer for everything, which makes it a poor question for a funding meeting. A core banking estate is a set of capabilities: account inquiry, ledger posting, interest, statements, customer data, notifications. Each one deserves its own decision, using the options from the usual R frameworks, such as [AWS's 7 Rs](https://docs.aws.amazon.com/prescriptive-guidance/latest/large-migration-guide/migration-strategies.html) (retire, retain, rehost, relocate, repurchase, replatform, refactor).
 
 Some capabilities should move early. Account inquiry, statements and notifications are supporting work with clear boundaries and limited financial risk. Others should move last, or not at all. Ledger posting is the core domain, the most coupled and the most expensive to get wrong. Keeping it on the mainframe, behind a clean API, is a legitimate outcome.
 
@@ -27,11 +27,11 @@ So the first thing I'd ask a modernization lead to produce, before any target ar
 - **Retain and encapsulate:** stable, cheap to run, not blocking change. Put an API in front of it and stop there.
 - **Retire:** nobody uses it. Static analysis plus runtime statistics often show more unused code than people expect.
 
-That list also protects you from the most expensive anti-pattern in this space, which is migrating the ledger first because it feels like the "real" modernization.
+That list also protects you from the most expensive anti-pattern in this space, which is migrating the ledger first because it looks like the biggest win.
 
 ## Budget for coexistence and teardown
 
-Here's the line item most plans leave out. During the transition you run the mainframe and the new services at the same time, plus the scaffolding that connects them: a routing facade, a translation layer, data-capture pipelines that copy changes from the mainframe into the new read model, reconciliation jobs that compare balances between the two. Thoughtworks' [Patterns of Legacy Displacement](https://martinfowler.com/articles/patterns-legacy-displacement/) (Ian Cartwright, Rob Horn and James Lewis) calls this transitional architecture, and it has to be built, run and paid for like any other software.
+During the transition you run the mainframe and the new services at the same time, plus the scaffolding that connects them: a routing facade, a translation layer, data-capture pipelines that copy changes from the mainframe into the new read model, reconciliation jobs that compare balances between the two. Thoughtworks' [Patterns of Legacy Displacement](https://martinfowler.com/articles/patterns-legacy-displacement/) (Ian Cartwright, Rob Horn and James Lewis) calls this transitional architecture, and it has to be built, run and paid for like any other software.
 
 Coexistence is usually the most expensive period of the whole program, since you pay for both stacks and for the bridge between them. If the budget assumes costs fall as soon as the first route moves, the money tends to run out in the middle, and the bank ends up with two systems and no plan to remove either.
 
@@ -60,11 +60,11 @@ The plan in the repo goes through seven phases per capability, each with an exit
 
 ![Left-to-right flow of the seven modernization phases for one capability: discover, encapsulate, build read side, prove, shift reads, extend and decommission, each with its exit criterion](diagrams/modernization-phases.png)
 
-In short: discover the boundaries and pick the capability; put a facade in front of the mainframe that passes everything through unchanged; build a modern read side and reconcile it; prove equivalence in a parallel run; shift reads gradually, with the mainframe kept as a fallback; extend into newly owned events and calculations; and decommission the old path once the books balance and sign-off is filed. Ownership of writes moves in stages too, with exactly one system owning writes at any moment. Dual writes from application code are the fastest way I know to lose a reconciliation.
+Ownership of writes moves in stages too, with exactly one system owning writes at any moment. Dual writes from application code are the fastest way I know to lose a reconciliation.
 
 ## Regulation is part of the plan
 
-For EU banks, the [Digital Operational Resilience Act (DORA)](https://www.eiopa.europa.eu/digital-operational-resilience-act-dora_en), Regulation (EU) 2022/2554, has applied since 17 January 2025. It covers ICT risk management, incident reporting, resilience testing and third-party risk, including exit strategies for critical ICT providers. A modernization program that adds cloud providers and new integration paths changes that picture, so involve your resilience and risk functions from the first phase, not at cutover. The same goes for audit trail continuity across both stacks and data lineage for risk reporting. Regulators and auditors ask why a decision was taken, sometimes years later, so record architecture decisions as you go.
+For EU banks, the [Digital Operational Resilience Act (DORA)](https://www.eiopa.europa.eu/digital-operational-resilience-act-dora_en), Regulation (EU) 2022/2554, has applied since 17 January 2025. It covers ICT risk management, incident reporting, resilience testing and third-party risk, including exit strategies for critical ICT providers. A modernization program that adds cloud providers and new integration paths changes that picture, so involve your resilience and risk functions from the first phase. Two more concerns sit next to DORA in the plan: audit trail continuity across both stacks and data lineage for risk reporting. Regulators and auditors ask why a decision was taken, sometimes years later, so record architecture decisions as you go.
 
 ## What to measure
 
@@ -77,7 +77,7 @@ Per capability, I'd review these at every steering meeting:
 - **Parallel-run mismatch rate:** whether the new behavior matches the old.
 - **Transitional components still alive:** the teardown signal.
 
-I don't have adoption or outcome numbers from a live rollout, and I won't invent any. These are the signals I'd use to decide whether to continue, slow down or stop.
+I have no results from a live rollout to report, so treat these as proposals: the signals I'd use to decide whether to continue, slow down or stop.
 
 ## Pilot with account inquiry
 
@@ -89,17 +89,17 @@ You don't need a program-wide commitment to test this. Pick one low-risk capabil
 4. **Shadow, then canary.** Compare responses in a parallel run, then route one channel or segment, keeping the mainframe as fallback.
 5. **Tear down what the pilot no longer needs.** Then review the six numbers and decide on the next capability.
 
-Where it doesn't pay off: a system small enough to replace in one well-tested release, a capability you're replacing with a vendor package, or a mainframe workload with no interception point at all. Coexistence has a cost, and sometimes that cost is higher than a careful cutover.
+Where it doesn't pay off: a system small enough to replace in one well-tested release, a capability you're replacing with a vendor package or a mainframe workload with no interception point at all. Coexistence has a cost, and sometimes that cost is higher than a careful cutover.
 
 ## Summary
 
-Modernizing a core banking platform is a series of capability decisions, each with its own funding, gates and teardown. Decide what moves and what stays. Budget for the period when both systems run, and for removing the scaffolding afterwards. Write the cutover gates (reconciliation, audit evidence, sign-off) before the work starts, and prove the whole loop on one low-risk capability like account inquiry before committing to the rest. I wrote about the discovery side, using AI to understand legacy systems before changing them, in [Above the rewrite](https://medium.com/@wallaceespindola/above-the-rewrite-how-ai-is-changing-legacy-modernization-ed757a9087a3).
+Modernizing a core banking platform is a series of capability decisions, each with its own funding, gates and teardown. Decide what moves and what stays. Budget for the period when both systems run, and for removing the scaffolding afterwards. Write the cutover gates (reconciliation, audit evidence, sign-off) before the work starts, and prove the whole loop on one low-risk capability like account inquiry before committing to the rest. I wrote about the discovery side, using AI to understand legacy systems before changing them, in [Above the Rewrite: How AI Is Changing Legacy Modernization](https://medium.com/@wallaceespindola/above-the-rewrite-how-ai-is-changing-legacy-modernization-ed757a9087a3).
 
 If you lead a modernization program, which line item was hardest to get funded: the coexistence period, the teardown or the reconciliation work? Let me know your thoughts in the comments.
 
 ---
 
-Examples repository: <https://github.com/wallaceespindola/legacy-modernization-patterns>
+**Examples repository:** <https://github.com/wallaceespindola/legacy-modernization-patterns>
 
 Need more tech insights?
 Check out my GitHub, LinkedIn, and Speaker Deck.
@@ -111,4 +111,5 @@ GitHub: <https://github.com/wallaceespindola/>
 LinkedIn: <https://www.linkedin.com/in/wallaceespindola/>
 Speaker Deck: <https://speakerdeck.com/wallacese>
 
-**#legacymodernization #corebanking #mainframe #engineeringleadership #softwarearchitecture #stranglerfig**
+<!-- markdownlint-disable-next-line MD018 -->
+#legacymodernization #corebanking #mainframe #engineeringleadership #softwarearchitecture #stranglerfig

@@ -1,10 +1,12 @@
-flowchart LR
-    S["<b>Shadow</b><br/>Customer gets: legacy<br/>New: computed, compared,<br/>result thrown away"]
-    C["<b>Canary</b><br/>Customer gets: new,<br/>small segment only<br/>Legacy: still computed, compared"]
-    F["<b>Cutover</b><br/>Customer gets: new, everyone<br/>Legacy: kept warm"]
-    R["<b>Rollback window closes</b><br/>Legacy path removed<br/>after sign-off"]
-    S -->|"every mismatch explained<br/>month-end included"| C
-    C -->|"SLOs hold,<br/>rollback rehearsed"| F
-    F -->|"window ends,<br/>reconciliation clean"| R
-    C -. "unexplained mismatch:<br/>flip the route back" .-> S
-    F -. "problem: routing change,<br/>not a deployment" .-> S
+block-beta
+    columns 3
+    S["<b>1. Shadow</b><br/>Customer gets: legacy<br/>New: computed, compared,<br/>result thrown away"]
+    a1<["every mismatch explained,<br/>month-end included"]>(right)
+    C["<b>2. Canary</b><br/>Customer gets: new,<br/>small segment only<br/>Legacy: still computed, compared"]
+    space:2
+    a2<["SLOs hold,<br/>rollback rehearsed"]>(down)
+    R["<b>4. Rollback window closes</b><br/>Legacy path removed<br/>after sign-off"]
+    a3<["window ends,<br/>reconciliation clean"]>(left)
+    F["<b>3. Cutover</b><br/>Customer gets: new, everyone<br/>Legacy: kept warm"]
+    N["<b>In canary or cutover:</b> an unexplained mismatch or a problem flips the route back (a routing change, not a deployment)"]:3
+    style N fill:#fff4e5,stroke:#e0a040
