@@ -2,11 +2,11 @@
 
 ![Strangle, don't replace](docs/images/banner.png)
 
-[![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE) [![Docs](https://img.shields.io/badge/Written_in-Markdown-000000?logo=markdown)](docs/legacy-modernization-patterns-context.md) [![Diagrams](https://img.shields.io/badge/Diagrams-Mermaid-ff3670?logo=mermaid&logoColor=white)](docs/legacy-modernization-patterns-context.md#2-how-the-patterns-work-together-account-modernization-example) [![Domain](https://img.shields.io/badge/Domain-Banking_%26_Finance-004A97)](docs/legacy-modernization-patterns-context.md) [![Target stack](https://img.shields.io/badge/Target-Java_%7C_Spring_Boot-6db33f?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot) [![DORA](https://img.shields.io/badge/EU-DORA_aware-003399)](https://eur-lex.europa.eu/eli/reg/2022/2554/oj) [![Java 21](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](examples/account-modernization/) [![docs CI](https://github.com/wallaceespindola/legacy-modernization-patterns/actions/workflows/docs.yml/badge.svg)](https://github.com/wallaceespindola/legacy-modernization-patterns/actions/workflows/docs.yml)
+[![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE) [![Diagrams](https://img.shields.io/badge/Diagrams-Mermaid-ff3670?logo=mermaid&logoColor=white)](#how-the-patterns-fit-together) [![Domain](https://img.shields.io/badge/Domain-Banking_%26_Finance-004A97)](#why) [![Target stack](https://img.shields.io/badge/Target-Java_%7C_Spring_Boot-6db33f?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot) [![DORA](https://img.shields.io/badge/EU-DORA_aware-003399)](https://eur-lex.europa.eu/eli/reg/2022/2554/oj) [![Java 21](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](examples/account-modernization/) [![docs CI](https://github.com/wallaceespindola/legacy-modernization-patterns/actions/workflows/docs.yml/badge.svg)](https://github.com/wallaceespindola/legacy-modernization-patterns/actions/workflows/docs.yml)
 
 The idea: the Strangler Fig pattern is the right way to modernize a core banking system, but it is only the migration framework. It does not decide what to extract, how to keep old and new data in step, or how to prove the new system gives the same answers as the old one. Those jobs belong to other patterns, and modernization goes wrong when they are missing.
 
-This repository collects those patterns in one place, with the banking and mainframe details that generic descriptions leave out. It is written as a context file: something to read before a design review, and something to hand to an AI assistant before asking it about a modernization plan.
+This repository puts those patterns together, with the banking and mainframe details that generic descriptions leave out, and a small Java module that shows the ones where the details matter most.
 
 ## Why
 
@@ -44,12 +44,6 @@ flowchart LR
 
 Strangler Fig is the migration framework, DDD decides what to extract, the ACL protects the new design, data and messaging patterns let the two systems coexist, and parallel runs plus reconciliation decide when a capability is actually done.
 
-## Context summary
-
-The full context is in [`docs/legacy-modernization-patterns-context.md`](docs/legacy-modernization-patterns-context.md). In short:
-
-**The twelve core patterns and their job in the migration**
-
 | Pattern                       | Job in the migration                                                 |
 | ----------------------------- | -------------------------------------------------------------------- |
 | Strangler Fig                 | Route capabilities from legacy to new services, one at a time        |
@@ -65,13 +59,44 @@ The full context is in [`docs/legacy-modernization-patterns-context.md`](docs/le
 | Hexagonal Architecture        | Keep the domain independent of the mainframe adapter                 |
 | Circuit Breaker + Bulkhead    | Contain failures when legacy dependencies slow down                  |
 
-**Supporting patterns** that usually get left out: API gateway / legacy facade, Event Interception, Idempotent Consumer / Inbox, characterization testing, feature toggles and canary releases, reconciliation, staged data ownership transfer, reverse synchronization, and correlation IDs across both worlds.
+The ones that usually get left out: a legacy facade, event interception, idempotent consumers, characterization tests, feature toggles, reconciliation, and correlation IDs that follow a request across both worlds.
 
-**Banking and mainframe details** covered per pattern: z/OS Connect and MQ interception, COMP-3 and EBCDIC translation, intraday memo posting vs end-of-day posting, COBOL vs Java rounding in parallel runs, reversal entries as saga compensation, and "unknown outcome" on timed-out financial writes.
+## Data ownership moves in stages
 
-**Account modernization in seven phases**, each with an exit criterion: discover, encapsulate (facade as pass-through), build the read side, prove with a parallel run, shift reads, extend with events and replaced calculations, decommission.
+Write ownership never jumps from the mainframe to the new service in one release. It moves through four stages, and at every stage exactly one system writes:
 
-**Pattern selection shortcuts**
+```mermaid
+flowchart LR
+    S1["1. Legacy writes<br/>new = CDC read copy"] --> S2["2. Legacy writes<br/>new computes in shadow"]
+    S2 --> S3["3. New writes<br/>legacy = reverse-sync copy"]
+    S3 --> S4["4. Legacy consumers moved<br/>sync and legacy retired"]
+```
+
+Reverse synchronization keeps batch jobs and regulatory reports that still read the mainframe working after stage 3. Reconciliation runs at every stage, and a stage is finished only when it comes back clean.
+
+## From shadow traffic to decommission
+
+A capability earns production traffic. The new service first runs in shadow, then serves a small segment, and the legacy path stays warm until the rollback window closes:
+
+```mermaid
+flowchart LR
+    A["Shadow<br/>new result discarded, compared"] --> B["Canary<br/>small segment served by new"]
+    B --> C["Cutover<br/>all traffic on new"]
+    C --> D["Rollback window<br/>legacy kept warm"]
+    D --> E[Decommission]
+    B -. mismatches above threshold .-> A
+```
+
+In a bank, the comparison is the hard part. COBOL `ROUNDED` and Java `HALF_EVEN` differ by a cent, 30/360 and ACT/365 day counts differ by days, and an intraday memo-posted balance is not the end-of-day posted one. A parallel run that does not classify mismatches by cause just produces noise.
+
+## Banking details that change the design
+
+- **Mainframe data is not JSON.** Packed decimals (COMP-3) and EBCDIC text need explicit decoding in the ACL, with tests on real copybook layouts.
+- **A timeout is not a failure.** When a posting call times out, the money may or may not have moved. The safe answer is an unknown outcome: ask for the status, retry once with the same idempotency key, and send anything still unclear to reconciliation.
+- **Ledger postings have no undo.** A saga can compensate a hold or a notification, but a posted entry is corrected with a reversal entry, never a delete.
+- **Regulation shapes the plan.** DORA covers ICT risk, incident reporting and exit strategies for ICT third-party providers that support critical functions; BCBS 239 expects data lineage that survives the migration.
+
+## Choosing patterns
 
 | Goal                            | Patterns                                                  |
 | ------------------------------- | --------------------------------------------------------- |
@@ -85,29 +110,7 @@ The full context is in [`docs/legacy-modernization-patterns-context.md`](docs/le
 | Contain failures                | Circuit Breaker + Bulkhead                                |
 | Move write ownership            | Staged ownership transfer + reverse sync + reconciliation |
 
-**Roles:** the Solution Architect picks the pattern for the problem, sets data ownership and transaction semantics, records decisions as ADRs, and aligns the plan with DORA, BCBS 239 and PCI DSS. AI discovers dependencies, extracts candidate rules, maps copybooks to schemas and triages parallel-run mismatches. Static analysis, deterministic tests, reconciliation and expert review validate everything it produces.
-
-Main sections of the context document:
-
-- [Principal patterns and use cases](docs/legacy-modernization-patterns-context.md#1-principal-patterns-and-use-cases), with [pattern details](docs/legacy-modernization-patterns-context.md#11-pattern-details), [supporting patterns](docs/legacy-modernization-patterns-context.md#12-supporting-patterns) and [anti-patterns](docs/legacy-modernization-patterns-context.md#13-anti-patterns-to-call-out).
-- [Account modernization example](docs/legacy-modernization-patterns-context.md#2-how-the-patterns-work-together-account-modernization-example) with phases and exit criteria.
-- [Where a Solution Architect adds value](docs/legacy-modernization-patterns-context.md#3-where-a-solution-architect-adds-value).
-- [Where AI adds value](docs/legacy-modernization-patterns-context.md#4-where-artificial-intelligence-ai-adds-value), with the risks to manage.
-- [Pattern selection shortcuts](docs/legacy-modernization-patterns-context.md#5-pattern-selection-shortcuts), [when not to use Strangler Fig](docs/legacy-modernization-patterns-context.md#when-not-to-use-strangler-fig) and [progress metrics](docs/legacy-modernization-patterns-context.md#measuring-progress).
-- [Glossary](docs/legacy-modernization-patterns-context.md#glossary) and [references](docs/legacy-modernization-patterns-context.md#references).
-
-## Who this is for
-
-- Solution and enterprise architects choosing patterns for a mainframe or core banking modernization.
-- Engineering leads who need a shared vocabulary for coexistence, data ownership and cutover.
-- Teams using AI assistants, who can load the context file before asking for designs, ADRs or migration plans.
-
-## How to use it
-
-- **Design reviews:** use the selection shortcuts and the anti-pattern list as a checklist for a modernization proposal.
-- **Planning:** start from the phased example and replace the capability (Account Inquiry) with your own.
-- **With an AI assistant:** reference the context file from a `CLAUDE.md` or `.github/copilot-instructions.md`, so the assistant starts from the same vocabulary and cautions.
-- **Writing:** it is the source material for articles and talks on the topic.
+AI helps on the discovery side: mapping dependencies, extracting candidate business rules from COBOL, turning copybooks into schemas and triaging parallel-run mismatches. Static analysis, deterministic tests, reconciliation and expert review still decide what is true.
 
 ## Java examples
 
@@ -124,46 +127,9 @@ Main sections of the context document:
 cd examples/account-modernization && mvn verify
 ```
 
-## Repository structure
-
-```text
-legacy-modernization-patterns/
-├── README.md                                      This file
-├── CLAUDE.md                                      Guidance for AI assistants working in the repo
-├── Makefile                                       format, lint, links, diagrams, slides, examples
-├── LICENSE                                        Apache 2.0
-├── .github/workflows/docs.yml                     Markdown lint, link check, Java build
-├── examples/account-modernization/                Java 21 pattern examples with tests
-└── docs/
-    ├── legacy-modernization-patterns-context.md   Pattern catalog and context
-    ├── images/banner.png                          Project banner
-    ├── articles/                                  Platform articles, banners and diagrams
-    └── presentations/                             Marp deck, PPTX, PDF, diagrams, import guide
-```
-
-## Working with the docs
-
-```bash
-make format     # Prettier, one line per paragraph
-make lint       # markdownlint-cli2
-make links      # lychee offline link check (needs lychee installed)
-make diagrams   # render .mmd and .puml sources to PNG
-make slides     # export the Marp deck to PDF and PPTX
-make examples   # mvn verify in the Java module
-make check      # lint + links + examples
-```
-
-Diagrams are Mermaid and PlantUML sources with rendered PNGs next to them. The talk deck is in `docs/presentations/` (see its [import guide](docs/presentations/GOOGLE_SLIDES.md) for Google Slides, Keynote and Speaker Deck).
-
-## Related reading
+## Further reading
 
 - [Banking Modernization with AI](https://github.com/wallaceespindola/banking-modernization-with-ai) (companion repo: why modernize, strategy options, AI controls and a 90-day plan)
-- [Stop Rewriting Legacy Systems: Use AI to Understand Them First](https://dev.to/wallaceespindola/stop-rewriting-legacy-systems-use-ai-to-understand-them-first-21ba) (Dev.to)
-- [Above the Rewrite: How AI Is Changing Legacy Modernization](https://medium.com/@wallaceespindola/above-the-rewrite-how-ai-is-changing-legacy-modernization-ed757a9087a3) (Medium)
-- [The Future of Legacy Modernization Isn't a Simple Rewrite](https://wallaceespindola.substack.com/p/the-future-of-legacy-modernization) (Code & Coffee, Substack)
-
-External references:
-
 - [Strangler Fig Application, Martin Fowler](https://martinfowler.com/bliki/StranglerFigApplication.html)
 - [Patterns of Legacy Displacement, Ian Cartwright, Rob Horn and James Lewis](https://martinfowler.com/articles/patterns-legacy-displacement/)
 - [Working Effectively with Legacy Code, Michael Feathers](https://www.oreilly.com/library/view/working-effectively-with/0131177052/) (characterization tests)
