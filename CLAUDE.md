@@ -9,7 +9,7 @@ A docs-first project about Strangler Fig and its complementary patterns for core
 ## Layout
 
 - `docs/legacy-modernization-patterns-context.md`: pattern catalog and context.
-- `examples/account-modernization/`: Java 21, Maven, JUnit 5, no Spring, no database.
+- `examples/account-modernization/`: Java 25, Maven, JUnit 5, no Spring, no database.
 - `docs/articles/<platform>/`: `article.md`, `banner.png` (InfoQ and DZone also `banner.jpg`), `diagrams/` with sources next to PNGs. `SERIES_OUTLINE.md`, `BANNER_DESIGN.md`, `PLATFORM_GUIDELINES.md` sit in `docs/articles/`.
 - `docs/presentations/`: Marp `slides.md`, exported PPTX/PDF, `GOOGLE_SLIDES.md`, `diagrams/`.
 

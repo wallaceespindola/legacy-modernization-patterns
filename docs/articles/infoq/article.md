@@ -31,7 +31,7 @@ The usual telling of that story covers the facade and the routing switch. It say
 
 This article treats that period as an architecture in its own right. It describes the patterns that make coexistence safe, groups them by the concern each one answers and looks at three problems that are specific to financial systems: staged transfer of data ownership, the unknown outcome of a timed-out write and the regulatory evidence that a cutover needs. It also covers where AI tools fit and the anti-patterns that show up most often.
 
-The analysis is grounded in an open repository: a pattern catalog for mainframe banking estates, a phased account modernization example and a small Java 21 module whose 36 tests exercise the translation, parallel run, outbox and safe posting patterns. The module is a teaching artifact. This article reports no adoption figures or production outcomes; the module has none.
+The analysis is grounded in an open repository: a pattern catalog for mainframe banking estates, a phased account modernization example and a small Java 25 module whose 36 tests exercise the translation, parallel run, outbox and safe posting patterns. The module is a teaching artifact. This article reports no adoption figures or production outcomes; the module has none.
 
 ## How the idea developed
 

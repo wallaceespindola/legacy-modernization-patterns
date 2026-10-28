@@ -1,6 +1,6 @@
 # Account modernization examples
 
-Plain Java 21 code behind the legacy modernization article series: four small, dependency-free examples of
+Plain Java 25 code behind the legacy modernization article series: four small, dependency-free examples of
 patterns used around a COBOL core banking system. No Spring, no database, so the build runs offline and fast.
 Terms and behavior follow `docs/legacy-modernization-patterns-context.md`.
 

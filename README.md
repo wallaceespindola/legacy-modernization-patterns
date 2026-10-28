@@ -2,7 +2,7 @@
 
 ![Strangle, don't replace](docs/images/banner.png)
 
-[![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE) [![Diagrams](https://img.shields.io/badge/Diagrams-Mermaid-ff3670?logo=mermaid&logoColor=white)](#how-the-patterns-fit-together) [![Domain](https://img.shields.io/badge/Domain-Banking_%26_Finance-004A97)](#why) [![Target stack](https://img.shields.io/badge/Target-Java_%7C_Spring_Boot-6db33f?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot) [![DORA](https://img.shields.io/badge/EU-DORA_aware-003399)](https://eur-lex.europa.eu/eli/reg/2022/2554/oj) [![Java 21](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](examples/account-modernization/) [![docs CI](https://github.com/wallaceespindola/legacy-modernization-patterns/actions/workflows/docs.yml/badge.svg)](https://github.com/wallaceespindola/legacy-modernization-patterns/actions/workflows/docs.yml)
+[![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE) [![Diagrams](https://img.shields.io/badge/Diagrams-Mermaid-ff3670?logo=mermaid&logoColor=white)](#how-the-patterns-fit-together) [![Domain](https://img.shields.io/badge/Domain-Banking_%26_Finance-004A97)](#why) [![Target stack](https://img.shields.io/badge/Target-Java_%7C_Spring_Boot-6db33f?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot) [![DORA](https://img.shields.io/badge/EU-DORA_aware-003399)](https://eur-lex.europa.eu/eli/reg/2022/2554/oj) [![Java 25](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)](examples/account-modernization/) [![docs CI](https://github.com/wallaceespindola/legacy-modernization-patterns/actions/workflows/docs.yml/badge.svg)](https://github.com/wallaceespindola/legacy-modernization-patterns/actions/workflows/docs.yml)
 
 The idea: the Strangler Fig pattern is the right way to modernize a core banking system, but it is only the migration framework. It does not decide what to extract, how to keep old and new data in step, or how to prove the new system gives the same answers as the old one. Those jobs belong to other patterns, and modernization goes wrong when they are missing.
 
@@ -195,7 +195,7 @@ AI is useful as a candidate generator: mapping dependencies, extracting business
 
 ## Java examples
 
-[`examples/account-modernization/`](examples/account-modernization/) is a small Java 21 module (Maven, JUnit 5, no Spring, no database) that implements the patterns where the details matter most:
+[`examples/account-modernization/`](examples/account-modernization/) is a small Java 25 module (Maven, JUnit 5, no Spring, no database) that implements the patterns where the details matter most:
 
 | Package | Pattern | What it shows |
 | --- | --- | --- |

@@ -1,7 +1,7 @@
 ---
 title: "Strangle, don't rewrite: patterns around a COBOL core"
 published: false
-description: "Java 21 code for the patterns around a Strangler Fig facade on a COBOL core: an ACL with COMP-3 decoding, a classified parallel run and an outbox."
+description: "Java 25 code for the patterns around a Strangler Fig facade on a COBOL core: an ACL with COMP-3 decoding, a classified parallel run and an outbox."
 tags: java, architecture, legacy, tutorial
 ---
 
@@ -11,7 +11,7 @@ Say your bank runs its ledger on a COBOL core, and the mobile team wants a moder
 
 That's the right starting point, and [Martin Fowler's Strangler Fig Application page](https://martinfowler.com/bliki/StranglerFigApplication.html) explains it well. The trouble starts the day after the facade goes in. The new service has to read packed decimals out of copybook records. It has to know whether a balance is posted or only memo-posted. It has to prove it computes the same interest as the old code before anyone flips a route. And once it publishes events, it has to survive the broker delivering the same event twice.
 
-That work falls to the patterns you add around the facade. This article covers the hands-on part: the Java code for three of those patterns (an anti-corruption layer, a parallel run with mismatch classification and a transactional outbox with an idempotent consumer), plus the read side you put next to them. Everything comes from a small Java 21 module in [legacy-modernization-patterns on GitHub](https://github.com/wallaceespindola/legacy-modernization-patterns), with no Spring and no database, so you can run it on a laptop in seconds.
+That work falls to the patterns you add around the facade. This article covers the hands-on part: the Java code for three of those patterns (an anti-corruption layer, a parallel run with mismatch classification and a transactional outbox with an idempotent consumer), plus the read side you put next to them. Everything comes from a small Java 25 module in [legacy-modernization-patterns on GitHub](https://github.com/wallaceespindola/legacy-modernization-patterns), with no Spring and no database, so you can run it on a laptop in seconds.
 
 If you want the "why" behind not rewriting legacy systems blind, I wrote about that earlier in [Stop rewriting legacy systems, use AI to understand them first](https://dev.to/wallaceespindola/stop-rewriting-legacy-systems-use-ai-to-understand-them-first-21ba). This one stays close to the code.
 
@@ -227,7 +227,7 @@ This toolkit has a cost: you build, run and later delete everything in it. If th
 
 ## Try it yourself
 
-You need Java 21 and Maven. Clone [the repo](https://github.com/wallaceespindola/legacy-modernization-patterns) and run the build:
+You need Java 25 and Maven. Clone [the repo](https://github.com/wallaceespindola/legacy-modernization-patterns) and run the build:
 
 ```bash
 cd examples/account-modernization && mvn verify
