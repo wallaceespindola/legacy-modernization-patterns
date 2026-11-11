@@ -58,7 +58,7 @@ Gates written before the work starts are cheap. Gates negotiated the week before
 
 The plan in the repo goes through seven phases per capability, each with an exit criterion. The flow is the same every time, which is what makes it governable.
 
-![Left-to-right flow of the seven modernization phases for one capability: discover, encapsulate, build read side, prove, shift reads, extend and decommission, each with its exit criterion](diagrams/modernization-phases.png)
+![Flow of the seven modernization phases for one capability, in two rows: discover, encapsulate, build read side, prove, shift reads, extend and decommission, each with its exit criterion](diagrams/modernization-phases.png)
 
 Ownership of writes moves in stages too, with exactly one system owning writes at any moment. Dual writes from application code are the fastest way I know to lose a reconciliation.
 

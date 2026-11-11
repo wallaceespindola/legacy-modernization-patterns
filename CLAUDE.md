@@ -16,7 +16,7 @@ A docs-first project about Strangler Fig and its complementary patterns for core
 ## Commands
 
 ```bash
-make diagrams   # render every .puml (plantuml) and .mmd (mermaid-cli) to a PNG next to its source
+make diagrams   # render every .puml (plantuml), .mmd (mermaid-cli) and .svg (rsvg-convert) to a PNG next to its source
 make lint       # markdownlint-cli2, config in .markdownlint.json
 make links      # offline relative-link check (needs lychee)
 make slides     # Marp export of docs/presentations/slides.md to PDF and PPTX
@@ -29,7 +29,7 @@ CI (`.github/workflows/docs.yml`) runs markdownlint, the offline link check and 
 ## Conventions
 
 - Code changes go in the module first; articles copy snippets from it verbatim (trimmed is fine, changed is not).
-- Diagrams: keep the `.puml` / `.mmd` source next to its rendered PNG and re-render after editing.
+- Diagrams: keep the `.puml` / `.mmd` / `.svg` source next to its rendered PNG and re-render after editing.
 - Prose: sentence-case headings (InfoQ title excepted), no em dashes, no emojis, no fabricated stats or anecdotes. Never name the author's employer or internal tools.
 - Regulatory and vendor facts (DORA, z/OS Connect, CDC tooling) drift; verify against the official source before stating them.
 - Author info: Wallace Espindola, Solution Architect, <wallace.espindola@gmail.com>, <https://www.linkedin.com/in/wallaceespindola/>, <https://github.com/wallaceespindola/>

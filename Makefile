@@ -1,6 +1,7 @@
 # Docs-first project: pattern context, articles, slides, diagrams and a Java example module.
 PUML := $(shell find docs -name '*.puml')
 MMD  := $(shell find docs -name '*.mmd')
+SVG  := $(shell find docs -name '*.svg')
 DECK := docs/presentations/slides.md
 NAME := legacy-modernization-patterns
 # Extra mermaid-cli flags, e.g. MMDC_FLAGS="-p puppeteer.json" to point at a local Chrome
@@ -14,8 +15,9 @@ help: ## Show targets
 format: ## Format Markdown with Prettier (one line per paragraph)
 	npx -y prettier@3.3.3 --write --prose-wrap never --print-width 120 "**/*.md"
 
-diagrams: ## Render all PlantUML and Mermaid sources to PNG next to their source
+diagrams: ## Render all PlantUML, Mermaid and SVG sources to PNG next to their source
 	@for f in $(PUML); do plantuml -tpng "$$f"; done
+	@for f in $(SVG); do rsvg-convert -z 2 -b white "$$f" -o "$${f%.svg}.png"; done
 	@for f in $(MMD); do npx -y @mermaid-js/mermaid-cli $(MMDC_FLAGS) -i "$$f" -o "$${f%.mmd}.png" -b white -s 2; done
 
 lint: ## Lint Markdown
