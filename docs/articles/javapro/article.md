@@ -21,7 +21,7 @@ A Strangler Fig migration of a COBOL core replaces one capability at a time, and
 
 A bank that strangles its core one capability at a time ends up with Java services that read COBOL records, recompute numbers the mainframe already computes, publish events and post money over links that sometimes time out. Each piece is a few dozen lines and easy to get subtly wrong. This article is for the people who will read the diff.
 
-The [legacy-modernization-patterns](https://github.com/wallaceespindola/legacy-modernization-patterns) repository holds the series context and a Maven module, `examples/account-modernization/`, with four packages: `acl`, `interest`, `outbox` and `posting`. It is plain Java 25 with JUnit 5 and AssertJ, 36 tests, no Spring and no database, so `mvn verify` runs offline in seconds. The code and the copybook layout are illustrative, made up for the example.
+The [legacy-modernization-patterns](https://github.com/wallaceespindola/legacy-modernization-patterns) repository holds the series context and a Maven module, `examples/account-modernization/`, with four packages: `acl`, `interest`, `outbox` and `posting`. It is plain Java 25 with JUnit 5 and AssertJ, 36 tests, no Spring and no database, so `mvn verify` runs offline in seconds. The code and the copybook layout are simplified examples, not taken from a production system.
 
 For the step before any of this, understanding what the legacy system does, see my earlier [Dev.to piece](https://dev.to/wallaceespindola/stop-rewriting-legacy-systems-use-ai-to-understand-them-first-21ba).
 
