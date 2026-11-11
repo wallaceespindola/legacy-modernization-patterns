@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1690" height="270" viewBox="0 40 1690 270" font-family="Helvetica, Arial, sans-serif">
+  <!-- Source for ownership-gates.png and ownership-gates.jpg: rsvg-convert -z 2 -b white ownership-gates.svg -o ownership-gates.png -->
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker></defs>
+  <rect width="1690" height="310" fill="#ffffff"/>
+  <rect x="30" y="70" width="250" height="110" rx="6" fill="#e0e7ff" stroke="#4338ca" stroke-width="2"/>
+  <text x="155.0" y="109.0" text-anchor="middle" font-size="17" font-weight="bold" fill="#0f172a">Stage 1</text>
+  <text x="155.0" y="131.0" text-anchor="middle" font-size="15" fill="#0f172a">Writer: legacy</text>
+  <text x="155.0" y="153.0" text-anchor="middle" font-size="15" fill="#0f172a">New: CDC read copy</text>
+  <rect x="490" y="70" width="250" height="110" rx="6" fill="#e0e7ff" stroke="#4338ca" stroke-width="2"/>
+  <text x="615.0" y="98.0" text-anchor="middle" font-size="17" font-weight="bold" fill="#0f172a">Stage 2</text>
+  <text x="615.0" y="120.0" text-anchor="middle" font-size="15" fill="#0f172a">Writer: legacy</text>
+  <text x="615.0" y="142.0" text-anchor="middle" font-size="15" fill="#0f172a">New: computes in shadow,</text>
+  <text x="615.0" y="164.0" text-anchor="middle" font-size="15" fill="#0f172a">reconciled daily</text>
+  <rect x="950" y="70" width="250" height="110" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+  <text x="1075.0" y="109.0" text-anchor="middle" font-size="17" font-weight="bold" fill="#0f172a">Stage 3</text>
+  <text x="1075.0" y="131.0" text-anchor="middle" font-size="15" fill="#0f172a">Writer: new service</text>
+  <text x="1075.0" y="153.0" text-anchor="middle" font-size="15" fill="#0f172a">Legacy: reverse-sync copy</text>
+  <rect x="1410" y="70" width="250" height="110" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+  <text x="1535.0" y="98.0" text-anchor="middle" font-size="17" font-weight="bold" fill="#0f172a">Stage 4</text>
+  <text x="1535.0" y="120.0" text-anchor="middle" font-size="15" fill="#0f172a">Writer: new service</text>
+  <text x="1535.0" y="142.0" text-anchor="middle" font-size="15" fill="#0f172a">Reverse sync and</text>
+  <text x="1535.0" y="164.0" text-anchor="middle" font-size="15" fill="#0f172a">legacy path retired</text>
+  <line x1="280" y1="125.0" x2="488" y2="125.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="385.0" y="117.0" text-anchor="middle" font-size="14" fill="#334155">reconciles</text>
+  <text x="385.0" y="99.0" text-anchor="middle" font-size="14" fill="#334155">gate: read model</text>
+  <line x1="740" y1="125.0" x2="948" y2="125.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="845.0" y="117.0" text-anchor="middle" font-size="14" fill="#334155">risk sign-off</text>
+  <text x="845.0" y="99.0" text-anchor="middle" font-size="14" fill="#334155">reverse sync tested,</text>
+  <text x="845.0" y="81.0" text-anchor="middle" font-size="14" fill="#334155">gate 2 to 3: shadow clean,</text>
+  <line x1="1200" y1="125.0" x2="1408" y2="125.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="1305.0" y="117.0" text-anchor="middle" font-size="14" fill="#334155">migrated</text>
+  <text x="1305.0" y="99.0" text-anchor="middle" font-size="14" fill="#334155">regulatory feeds</text>
+  <text x="1305.0" y="81.0" text-anchor="middle" font-size="14" fill="#334155">gate: batch, reports and</text>
+  <path d="M1075.0,180 V230 H615.0 V182" stroke="#475569" stroke-width="2" fill="none" stroke-dasharray="7 5" marker-end="url(#a)"/>
+  <text x="845.0" y="256" text-anchor="middle" font-size="14" fill="#334155">rollback 3 to 2: ownership back to legacy, data flows back</text>
+</svg>
