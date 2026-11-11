@@ -19,7 +19,7 @@ If you want the "why" behind not rewriting legacy systems blind, I wrote about t
 
 Here's where each pattern sits around the facade, and which package in the repo implements it:
 
-![Pattern map in three rows: routing, where clients call a strangler facade that sends shadow and canary traffic to a parallel run; the legacy path, where the ACL fronts the COBOL core; and the modern path, where the modern service writes to an outbox table in the same transaction and a relay publishes to an event bus read by an idempotent consumer](diagrams/pattern-map.png)
+![Pattern map in three rows: routing, where clients call a strangler facade that sends shadow and canary traffic to a parallel run; the modern path, where the parallel run hands the modern result to the modern service, which writes to an outbox table in the same transaction and a relay publishes to an event bus read by an idempotent consumer; and the legacy path, where the facade sends legacy calls to the ACL in front of the COBOL core](diagrams/pattern-map.png)
 
 The facade is the interception point. It starts as a pure pass-through (100% of traffic to legacy, no behavior change), and you only flip a route after the patterns below have done their job. Rolling back means changing a route, with no deployment involved.
 
@@ -108,7 +108,7 @@ A few rules I'd hold the ACL to:
 
 The first capability most teams move is account inquiry, because reads are low risk and high volume. The usual shape is change data capture (CDC) from the legacy store into a read model, with the ledger staying the system of record. That's CQRS without event sourcing: the mainframe ledger is already the write model.
 
-![Read-side flow in two rows: the facade sends balance reads to the account inquiry service while CDC lag is within its SLO and falls back to a legacy call through the ACL when it isn't; below, the COBOL ledger memo-posts during the day and hard-posts at end of day, and CDC feeds a translation step into a read model with pending and posted balances](diagrams/read-side-flow.png)
+![Read-side flow in two rows: the facade sends balance reads to the account inquiry service while CDC lag is within its SLO, and falls back to a legacy call through the ACL to the COBOL ledger when it isn't; below, the ledger memo-posts during the day and hard-posts at end of day, and CDC feeds a translation step into the read model with pending and posted balances, which the inquiry service reads](diagrams/read-side-flow.png)
 
 The repo doesn't ship a CDC pipeline (it would need a database and a broker), but the ACL above is exactly what the translation step needs. Raw CDC records are legacy-shaped. If you write them straight into the read model, the new model inherits the old schema, flags included. So run them through the same kind of translation, and store `POSTED` and `PENDING` as separate, explicit values.
 

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1820" height="630" viewBox="0 0 1820 630" font-family="Helvetica, Arial, sans-serif">
+  <!-- Source for pattern-map.png: rsvg-convert -z 2 -b white pattern-map.svg -o pattern-map.png -->
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker></defs>
+  <rect width="1820" height="630" fill="#ffffff"/>
+  <rect x="20" y="20" width="1780" height="170" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="34" y="42" font-size="15" font-weight="bold" fill="#475569">Routing</text>
+  <rect x="20" y="230" width="1780" height="170" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="34" y="252" font-size="15" font-weight="bold" fill="#475569">Modern path</text>
+  <rect x="20" y="440" width="1780" height="170" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="34" y="462" font-size="15" font-weight="bold" fill="#475569">Legacy path</text>
+  <rect x="40.0" y="74.0" width="190" height="92" rx="6" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="135.0" y="126" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">Mobile / web</text>
+  <rect x="350.0" y="74.0" width="190" height="92" rx="6" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="445.0" y="116" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">Strangler facade</text>
+  <text x="445.0" y="136" text-anchor="middle" font-size="14" fill="#1e293b">routes per operation</text>
+  <rect x="660.0" y="74.0" width="190" height="92" rx="6" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="755.0" y="96" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">Parallel run</text>
+  <text x="755.0" y="116" text-anchor="middle" font-size="14" fill="#1e293b">interest package</text>
+  <text x="755.0" y="136" text-anchor="middle" font-size="14" fill="#1e293b">compare, classify,</text>
+  <text x="755.0" y="156" text-anchor="middle" font-size="14" fill="#1e293b">serve legacy</text>
+  <rect x="660.0" y="284.0" width="190" height="92" rx="6" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="755.0" y="336" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">Modern service</text>
+  <path d="M970.0,294.0 A95.0,10 0 0 1 1160.0,294.0 V366.0 A95.0,10 0 0 1 970.0,366.0 Z" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <path d="M970.0,294.0 A95.0,10 0 0 0 1160.0,294.0" fill="none" stroke="#6366f1" stroke-width="2"/>
+  <text x="1065.0" y="342" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">Outbox table</text>
+  <rect x="1280.0" y="284.0" width="190" height="92" rx="6" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="1375.0" y="336" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">Event bus</text>
+  <rect x="1590.0" y="284.0" width="190" height="92" rx="6" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="1685.0" y="316" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">Idempotent</text>
+  <text x="1685.0" y="336" text-anchor="middle" font-size="14" fill="#1e293b">consumer</text>
+  <text x="1685.0" y="356" text-anchor="middle" font-size="14" fill="#1e293b">outbox package</text>
+  <rect x="350.0" y="494.0" width="190" height="92" rx="6" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="445.0" y="516" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">ACL</text>
+  <text x="445.0" y="536" text-anchor="middle" font-size="14" fill="#1e293b">acl package</text>
+  <text x="445.0" y="556" text-anchor="middle" font-size="14" fill="#1e293b">COMP-3, codes,</text>
+  <text x="445.0" y="576" text-anchor="middle" font-size="14" fill="#1e293b">POSTED/PENDING</text>
+  <path d="M660.0,504.0 A95.0,10 0 0 1 850.0,504.0 V576.0 A95.0,10 0 0 1 660.0,576.0 Z" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <path d="M660.0,504.0 A95.0,10 0 0 0 850.0,504.0" fill="none" stroke="#6366f1" stroke-width="2"/>
+  <text x="755.0" y="532" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e293b">COBOL core</text>
+  <text x="755.0" y="552" text-anchor="middle" font-size="14" fill="#1e293b">ledger = system</text>
+  <text x="755.0" y="572" text-anchor="middle" font-size="14" fill="#1e293b">of record</text>
+  <path d="M230.0,120 H348.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M540.0,120 H658.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="600.0" y="92.0" text-anchor="middle" font-size="14" fill="#334155">shadow,</text>
+  <text x="600.0" y="110.0" text-anchor="middle" font-size="14" fill="#334155">then canary</text>
+  <path d="M755.0,166.0 V282.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="765.0" y="230.0" text-anchor="start" font-size="14" fill="#334155">modern result</text>
+  <path d="M850.0,330 H968.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="910.0" y="302.0" text-anchor="middle" font-size="14" fill="#334155">same</text>
+  <text x="910.0" y="320.0" text-anchor="middle" font-size="14" fill="#334155">transaction</text>
+  <path d="M1160.0,330 H1278.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="1220.0" y="302.0" text-anchor="middle" font-size="14" fill="#334155">relay,</text>
+  <text x="1220.0" y="320.0" text-anchor="middle" font-size="14" fill="#334155">at least once</text>
+  <path d="M1470.0,330 H1588.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M445.0,166.0 V492.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="435.0" y="335" text-anchor="end" font-size="14" fill="#334155">legacy path</text>
+  <path d="M540.0,540 H658.0" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+</svg>
