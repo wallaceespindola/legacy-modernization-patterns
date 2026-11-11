@@ -21,32 +21,32 @@ Tags: legacy-modernization, strangler-fig, mainframe, software-architecture, dat
 
 ---
 
-Most core banking modernizations that follow the Strangler Fig approach spend years in a state nobody designed on purpose. Part of the traffic goes to new services, part still hits COBOL programs behind CICS, a CDC pipeline keeps a read model fed and a reconciliation job runs every night to check that both sides agree. That middle state is the coexistence period. It's where the risk sits, and during the transition it carries a large share of the run cost, because you pay for both stacks and for the scaffolding between them.
+A bank that modernizes its core with the Strangler Fig approach lives for a long time in a state that no architecture diagram was drawn for. Some calls already land on new services. Others still reach COBOL programs running under CICS. A CDC pipeline feeds a read model, and every night a reconciliation job checks whether the two sides tell the same story. I call that state the coexistence period. Most of the risk of the program is in it, and so is a big part of the run cost during the transition, since both stacks are paid for along with the scaffolding that joins them.
 
-The patterns for that period are well documented. Martin Fowler's [Strangler Fig Application](https://martinfowler.com/bliki/StranglerFigApplication.html) (the current page is dated 22 August 2024) and [Patterns of Legacy Displacement](https://martinfowler.com/articles/patterns-legacy-displacement/) by Ian Cartwright, Rob Horn and James Lewis (first published 20 July 2021) cover the technical moves. What's less written down is the governance: who decides when a route flips, what evidence a cutover needs, who owns the data at each stage and how you notice that the "temporary" architecture has become permanent.
+The technical side of that period has good literature. Martin Fowler's [Strangler Fig Application](https://martinfowler.com/bliki/StranglerFigApplication.html) (the current page is dated 22 August 2024) and [Patterns of Legacy Displacement](https://martinfowler.com/articles/patterns-legacy-displacement/) by Ian Cartwright, Rob Horn and James Lewis (first published 20 July 2021) describe the moves. Governance gets far fewer pages. Who is allowed to flip a route? What evidence does a cutover need? Which system owns the data at each step, and how does anyone find out that the "temporary" architecture is still there three years later?
 
-This article is about that governance side. It's a pattern guide and a proposal, built on the catalog and the Java examples in the [companion repository](https://github.com/wallaceespindola/legacy-modernization-patterns). I don't have adoption numbers from a live rollout, and I won't invent any. If you want the earlier, AI-assisted discovery angle on the same problem, I covered it in [Stop rewriting legacy systems, use AI to understand them first](https://dev.to/wallaceespindola/stop-rewriting-legacy-systems-use-ai-to-understand-them-first-21ba). Here I stay with process: roles, gates, data ownership, reconciliation, metrics and the ways it goes wrong.
+That governance is my subject here. Read it as a pattern guide and a proposal, based on the catalog and the Java examples in the [companion repository](https://github.com/wallaceespindola/legacy-modernization-patterns). I don't have adoption numbers from a live rollout, and I won't invent any. For the step that comes before all this, AI-assisted discovery of what the legacy system does, see my earlier [Stop rewriting legacy systems, use AI to understand them first](https://dev.to/wallaceespindola/stop-rewriting-legacy-systems-use-ai-to-understand-them-first-21ba). This article is about process: roles, gates, data ownership, reconciliation, metrics and the usual ways a program goes wrong.
 
 ## The model in one paragraph
 
-Modernization is decided per capability, one capability at a time. For each capability (account inquiry, interest, notifications, posting), the program moves through seven phases, and each phase ends with an exit criterion that works as a gate: the next phase starts only when the evidence for the previous one is filed and signed. Data ownership moves in stages with exactly one writer at every stage, and the other side gets data through CDC or a reverse-sync path, never through dual writes from application code. Reconciliation of balances and positions between the two stores is the cutover gate. Passing tests alone don't open it. And every piece of transitional architecture has a removal date on the day it's created.
+You decide modernization capability by capability, and you move one capability at a time. Each capability (account inquiry, interest, notifications, posting) goes through seven phases. A phase ends with an exit criterion, and I treat that criterion as a gate: the next phase can't start until the evidence for the current one is filed and signed. Data ownership changes in stages, and at every stage there is exactly one writer. The other side receives data through CDC or a reverse-sync path. Application code never writes to both. The cutover gate is reconciliation of balances and positions between the two stores, and a green test suite doesn't open it by itself. Every transitional component gets its removal date on the day somebody creates it.
 
-Underneath all of it, rollback stays a routing change for as long as possible. Once a new service owns writes, rollback also needs data to flow back to legacy, which is why the ownership transfer is the most guarded step in the whole program.
+One more rule sits under all of this: keep rollback a routing change for as long as you can. That stops being true when a new service owns writes, because from then on rollback also means sending data back to legacy. For that reason the ownership transfer is the step I'd guard most in the whole program.
 
 ## Roles and decision rights
 
-Coexistence spans two technology stacks, two operations teams and usually two sets of people who have never worked together. Without explicit decision rights, every incident turns into "I thought the other side checked that". These are the roles I'd name in a program charter:
+Coexistence involves two technology stacks, two operations teams and, most of the time, two groups of people who haven't worked together before. If decision rights aren't written down, each incident ends with somebody saying "I thought the other side checked that". In a program charter I'd name these roles:
 
-- **Solution architect:** owns the target design, the phase plan and the exit criteria. Records each pattern choice as an ADR, because auditors and regulators ask _why_ years later. Owns the decommission plan for every transitional component.
-- **Product or business owner:** owns the capability and its value per phase (MIPS/MSU reduction, time to market, risk reduction). Signs the business side of every cutover. Funding tends to stop mid-strangle when nobody can show value per phase, so this role keeps the business case current.
-- **Risk and compliance:** defines what counts as audit evidence, signs cutovers that move data ownership and checks regulatory alignment. In the EU that includes [DORA (Regulation (EU) 2022/2554)](https://www.eiopa.europa.eu/digital-operational-resilience-act-dora_en), which applies from 17 January 2025 and covers operational resilience and ICT third-party risk. Data lineage for risk reporting (BCBS 239) and PCI DSS scope for card data come up in the same reviews.
-- **Operations (both stacks):** own the SLOs, the CDC lag alerts, the reconciliation break queue and the rollback drill. They run the coexistence, so they get a veto on any gate that adds an unmonitored component.
-- **Mainframe engineers:** own legacy behavior, copybooks, batch windows and the CICS side of each interception point. They are also the people who know which "bugs" downstream systems depend on.
-- **Modern engineers:** own the new services, the anti-corruption layer, the read model and the comparison tooling for parallel runs.
+- **Solution architect:** responsible for the target design, the phase plan and the exit criteria. Writes an ADR for each pattern choice, since auditors and regulators come back years later asking _why_. Also owns the decommission plan of every transitional component.
+- **Product or business owner:** responsible for the capability and for the value each phase delivers (MIPS/MSU reduction, time to market, risk reduction). Signs the business side of every cutover. Programs lose funding mid-strangle when nobody can show value per phase, so this person keeps the business case up to date.
+- **Risk and compliance:** decides what is accepted as audit evidence, signs any cutover that moves data ownership and checks regulatory alignment. In the EU that includes [DORA (Regulation (EU) 2022/2554)](https://www.eiopa.europa.eu/digital-operational-resilience-act-dora_en), which has applied since 17 January 2025 and covers operational resilience and ICT third-party risk. The same reviews usually bring up data lineage for risk reporting (BCBS 239) and PCI DSS scope for card data.
+- **Operations (both stacks):** responsible for the SLOs, the CDC lag alerts, the reconciliation break queue and the rollback drill. They are the ones running the coexistence, so I'd give them a veto on any gate that would add a component nobody monitors.
+- **Mainframe engineers:** responsible for legacy behavior, copybooks, batch windows and the CICS side of each interception point. They also know which "bugs" the downstream systems have come to depend on.
+- **Modern engineers:** responsible for the new services, the anti-corruption layer, the read model and the comparison tooling used in parallel runs.
 
-Pair the last two on purpose. Legacy knowledge has to move before people retire, and a team aligned to a bounded context (Conway's Law applies here as much as anywhere) is easier to govern than a "mainframe team" handing tickets to a "cloud team".
+I'd pair the last two roles deliberately. The legacy knowledge has to be transferred before its owners retire. And a team built around a bounded context (Conway's Law works here like everywhere else) is simpler to govern than a "mainframe team" that passes tickets to a "cloud team".
 
-The table below maps who signs which gate. R is responsible for producing the evidence, A is accountable for the decision, C is consulted.
+The next table shows who signs which gate. R produces the evidence, A is accountable for the decision and C is consulted.
 
 | Gate | Architect | Business owner | Risk and compliance | Operations | Mainframe eng. | Modern eng. |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -58,11 +58,11 @@ The table below maps who signs which gate. R is responsible for producing the ev
 | Write ownership transferred | C | A | A | R | R | R |
 | Capability decommissioned | R | A | A | C | R | C |
 
-Two rows carry a double A on purpose. Moving write ownership and switching off the legacy path are the two decisions that are hard to reverse, so business and risk both sign.
+You'll see two A's in two of the rows, and that's intended. Transferring write ownership and turning off the legacy path are the two decisions you can't easily undo, so I want a signature from the business and one from risk.
 
 ## Seven phases, each with a gate
 
-The phases below follow the account modernization example in the repo's context document. The starting point is a COBOL core banking system that stays system of record for ledger posting and settlement, and the first capability to move is Account Inquiry, a supporting domain with low risk. The ledger is the core domain and usually moves last, or stays.
+These phases come from the account modernization example in the context document of the repo. It starts with a COBOL core banking system that remains system of record for ledger posting and settlement. The first capability to leave is Account Inquiry, a low-risk supporting domain. The ledger, which is the core domain, normally goes last or doesn't go at all.
 
 ![Seven phases of one capability, each ending in a gate: discover, encapsulate, build read side, prove, shift reads, extend and decommission, finishing when the books balance, evidence is filed and the business and risk owners sign off](diagrams/phase-gates.jpg)
 
@@ -77,7 +77,7 @@ _Figure 1: Phases of one capability with the exit criterion that gates each tran
 | Green | Move traffic or ownership |
 | Dark | Remove scaffolding and close the capability |
 
-Here's what each gate asks for:
+Each gate asks for the following:
 
 | Phase | Work | Exit criterion (the gate) |
 | --- | --- | --- |
@@ -89,21 +89,21 @@ Here's what each gate asks for:
 | 5. Extend | Outbox and events for newly owned events, Branch by Abstraction for selected calculations | Each replacement passes its own shadow, canary and cutover |
 | 6. Decommission | Remove the legacy path, ACL pieces and transitional pipelines for the capability | Reconciliation clean, audit evidence filed, explicit business and risk sign-off |
 
-Four rows in that table need more explanation than the table gives.
+The table is short on four points, so here is a bit more on each.
 
-**N business days, including month-end.** The context file leaves N open, and so do I. It's a number your risk owner sets, and it has to include at least one month-end, because that's where batch interest accrual, statements and settlement files run. Add quarter-end and year-end to the window for capabilities that touch them. "Equivalent" systems tend to diverge on calendars: cut-off times, holidays and leap years.
+**N business days, including month-end.** The context file doesn't fix N, and I don't either. Your risk owner picks the number. Whatever it is, the window needs at least one month-end, since batch interest accrual, statements and settlement files all run then. If the capability touches quarter-end or year-end processing, the window should cover those too. Systems that look equivalent usually drift apart on the calendar: cut-off times, holidays, leap years.
 
-**The agreed threshold.** Same thing. Set it before the parallel run starts, write it into the gate and don't negotiate it down after you see the first results. Every explained difference goes on a known-difference allowlist with a sign-off, and unexplained ones block the gate.
+**The agreed threshold.** The same idea applies. Fix the threshold before the parallel run begins and write it into the gate. Then leave it alone when the first results arrive. A difference you can explain goes on a known-difference allowlist, with a sign-off. A difference you can't explain blocks the gate.
 
-**Phase 1 is a pass-through on purpose.** Installing the facade early with 100% of traffic going to legacy can look like ceremony, but it proves the interception point works, gives you correlation IDs across both worlds before anything moves and later lets you flip routes per operation, per channel or per customer segment without touching clients.
+**Phase 1 is a pass-through on purpose.** A facade that sends 100% of the traffic to legacy may look like ceremony. It isn't wasted work. It shows that the interception point holds, it gives you correlation IDs across both worlds before anything moves and it lets you flip routes later (per operation, per channel or per customer segment) with no change on the client side.
 
-**Phase 5 repeats the gates.** Each new replacement inside the capability (an interest calculation behind Branch by Abstraction, a newly owned event) goes through its own shadow, canary and cutover. A capability isn't "in phase 5" as a whole. Its parts are, each at its own stage.
+**Phase 5 repeats the gates.** Inside a capability, each new replacement (an interest calculation behind Branch by Abstraction, an event the new side now owns) has its own shadow, canary and cutover. So you can't say a capability is "in phase 5" as one block. Its pieces are, and each piece sits at a different stage.
 
 ## Staged data ownership transfer, one writer at a time
 
-Moving code is the easy part. Moving the authoritative copy of the data is where programs get hurt, and it's also the part with the weakest governance in most plans I've read: a single line in a roadmap that says "migrate data".
+Code is the easier thing to move. The authoritative copy of the data is what hurts programs, and in most plans I've read it's also where governance is thinnest: one roadmap line that reads "migrate data".
 
-In the charter I'd write one rule: never dual-write from application code to both stores. Exactly one system owns writes at any moment. A partial failure in a dual write guarantees divergence, and then reconciliation is cleaning up a design flaw instead of catching edge cases.
+I'd put a single rule in the charter. Application code never dual-writes to both stores, and at any moment only one system owns writes. With a dual write, the first partial failure makes the two stores diverge. After that, reconciliation spends its time repairing a design flaw, when its job was to catch edge cases.
 
 ![Four stages of data ownership with one writer each: legacy writes while the new side holds a CDC read copy, legacy writes while the new side computes in shadow, the new service writes while legacy keeps a reverse-sync copy, then legacy consumers move and the legacy path retires; a dashed rollback path returns ownership from stage 3 to stage 2](diagrams/ownership-gates.jpg)
 
@@ -118,33 +118,33 @@ _Figure 2: Data ownership stages with the gate between each stage and the rollba
 | Solid arrow | Forward transition, labeled with its gate |
 | Dashed arrow | Rollback path, which needs data to flow back |
 
-For governance, the stage 2 to stage 3 transition matters most. Up to stage 2, rollback is a routing change: flip the facade back and legacy carries on, because it never stopped owning the data. From stage 3 on, rollback means handing ownership back to legacy and making sure every write the new service accepted flows back, which is what the reverse-sync path is for. So that gate asks for more than the others:
+From a governance point of view, the move from stage 2 to stage 3 is the one to watch. Until stage 2, you roll back by routing: the facade points to legacy again and legacy continues, since it was the owner of the data all along. Starting at stage 3, rolling back means giving ownership back to legacy and getting every write the new service took back into it. The reverse-sync path exists for exactly that. So I'd ask more of this gate than of any other:
 
 - shadow computation reconciled cleanly over the agreed window;
 - reverse sync (reverse CDC or an ACL write-back) tested end to end, including the rollback direction;
 - a rehearsed rollback, with operations owning the runbook;
 - sign-off from both the business owner and risk.
 
-Stage 4 has its own trap. After the new service owns writes, legacy batch jobs, reports and regulatory feeds still read the legacy store. Those consumers have to be migrated before you can retire the reverse sync, and they're easy to forget because nobody on the modernization team calls them. Inventory them in phase 0, while there is still time to plan for them.
+Stage 4 hides a trap of its own. The new service owns writes, but legacy batch jobs, reports and regulatory feeds keep reading the legacy store. You can't retire the reverse sync until those consumers have moved, and people forget them, since they never call anyone on the modernization team. List them in phase 0, when you still have time to plan their migration.
 
 ## Reconciliation is the cutover gate
 
-In banking, a cutover is gated by reconciliation and audit evidence. Tests are necessary, but they prove the code does what the team thinks it should. Reconciliation proves the books balance against the system that has been right for decades.
+A banking cutover is approved on reconciliation and audit evidence. You need the tests too, but what they show is that the code behaves the way the team expects. Reconciliation shows that the books balance against the system that has been correct for decades.
 
-I'd treat reconciliation as a product with an owner and a backlog. Concretely:
+I'd run reconciliation like a product, with an owner and a backlog. In practice that means:
 
 - **Scheduled and automated:** balances and positions compared between the legacy store and the new store on a fixed cadence, with tolerance rules defined up front.
 - **Break management:** each break gets a category, an owner and a time to resolve. The break rate is one metric and the time to resolve is another.
-- **Pending vs posted:** many cores memo-post during the day and hard-post in the end-of-day batch. CDC sees both. If the read model doesn't model pending and posted explicitly, reconciliation will report breaks that are really timing, and the team learns to ignore the report, which is worse than having no report at all.
+- **Pending vs posted:** many cores memo-post during the day and hard-post in the end-of-day batch, and CDC captures both. A read model that doesn't keep pending and posted apart makes reconciliation report breaks that are only timing. The team then stops reading the report, and at that point you'd be better off with no report.
 - **Evidence trail:** the reconciliation reports for the gate window are what risk and compliance file as cutover evidence.
 
-The parallel run applies the same discipline to calculations. Comparing old and new outputs needs field mapping, tolerance rules, a known-difference allowlist, a sampling rate and a triage workflow. The usual false mismatches are rounding mode (COBOL `ROUNDED` is half-up by default, Java `BigDecimal` needs an explicit `RoundingMode`), day-count conventions, business date vs system date, time zones and intermediate truncation. The shadow path must not create side effects, so enforce sandboxed stores and stubbed notification and payment adapters through configuration rather than relying on convention.
+For calculations, the parallel run asks for the same discipline. To compare old and new outputs you need field mapping, tolerance rules, a known-difference allowlist, a sampling rate and a triage workflow. Expect the usual false mismatches: rounding mode (COBOL `ROUNDED` is half-up by default, Java `BigDecimal` needs an explicit `RoundingMode`), day-count conventions, business date vs system date, time zones and intermediate truncation. And the shadow path can't produce side effects. Sandboxed stores and stubbed notification and payment adapters have to be forced by configuration, because a convention only works until somebody forgets it.
 
 ## When the outcome is unknown, the process has to say so
 
-Governance also has to cover what happens between the gates, when a financial write over an unreliable link times out. A timeout on a posting call means the outcome is unknown. The posting may have landed on the mainframe or not. A blind retry risks a double posting, and giving up risks a lost one.
+Gates are not the whole story. Governance also needs an answer for what happens between them, for example when a financial write times out on an unreliable link. If a posting call times out, you don't know the outcome. Maybe the mainframe applied the posting, maybe it didn't. Retry blindly and you may post twice. Give up and you may lose a posting.
 
-The `posting` package in the repo shows the shape the process should require. Here's a trimmed version of `examples/account-modernization/src/main/java/com/wallaceespindola/modernization/posting/SafePostingClient.java` (the package line, imports and constructor are left out):
+The `posting` package in the repo has the shape I'd want the process to require. This is a trimmed version of `examples/account-modernization/src/main/java/com/wallaceespindola/modernization/posting/SafePostingClient.java` (the package line, imports and constructor are left out):
 
 ```java
 /** Safe posting: on timeout, ask the ledger before retrying, retry once, then reconcile. */
@@ -185,13 +185,13 @@ public class SafePostingClient {
 }
 ```
 
-The code is small, but it encodes three process decisions. The request carries an idempotency key end to end, so the ledger can answer a status inquiry. On timeout the client asks before it retries, and it retries at most once. Anything still unresolved goes to a `ReconciliationQueue` and comes back as an explicit `Unknown` result, never as a guessed success or failure. The governance side is who drains that queue: an operations role with a defined time to resolve, and the queue depth as a metric on the same dashboard as reconciliation breaks.
+It's a small class, and three process decisions are written into it. First, the request carries an idempotency key end to end, which lets the ledger answer a status inquiry. Second, after a timeout the client asks the ledger before retrying, and it retries only once. Third, whatever is still open goes to a `ReconciliationQueue`, and the caller gets an explicit `Unknown` result. The client doesn't guess success or failure. What governance adds is an owner for that queue: an operations role with a defined time to resolve, and the queue depth shown on the dashboard next to the reconciliation breaks.
 
-Retries also have a cost on the mainframe. They raise MIPS/MSU consumption, which is often the billing metric, so retry budgets and rate limiting at the facade belong in the operations runbook too.
+Retries are not free on the mainframe either. They push up MIPS/MSU consumption, and that's often what the bill is based on. So the operations runbook should also set retry budgets and rate limiting at the facade.
 
 ## What to measure
 
-A program without signals turns into a schedule. Track these per capability, because a program-level average hides the capability that's stuck:
+If a program has no signals, all that's left to manage is the schedule. I'd track the metrics below for each capability separately, since an average over the whole program hides the one that's stuck:
 
 | Metric | Question it answers | Warning sign |
 | --- | --- | --- |
@@ -202,13 +202,13 @@ A program without signals turns into a schedule. Track these per capability, bec
 | Parallel-run mismatch rate | Is the new logic equivalent? | Unexplained mismatches, allowlist growing without sign-off |
 | Transitional components still alive | Is the scaffolding being removed? | Count only ever goes up |
 
-The last one is the one I'd put on the steering committee's first slide. The facade, the ACL pieces, the CDC pipelines, the reverse sync and the reconciliation jobs are what Patterns of Legacy Displacement calls [Transitional Architecture](https://martinfowler.com/articles/patterns-legacy-displacement/transitional-architecture.html): software installed to ease the displacement of a legacy system and meant to be removed. Counting them, with a removal date next to each, keeps that "meant to be" honest.
+If I had to choose one for the first slide of the steering committee, it would be the last row. The facade, the ACL pieces, the CDC pipelines, the reverse sync and the reconciliation jobs are what Patterns of Legacy Displacement calls [Transitional Architecture](https://martinfowler.com/articles/patterns-legacy-displacement/transitional-architecture.html): software installed to ease the displacement of a legacy system and meant to be removed. A count of those components, each with its removal date, shows whether "meant to be removed" is still the plan.
 
-I haven't put target values in the table. Thresholds depend on your volumes, your SLOs and your regulator. The governance point is that each metric has an owner and a warning sign agreed before the phase starts.
+The table has no target values, and that's deliberate. A threshold depends on your volumes, your SLOs and your regulator. What I care about for governance is that every metric has an owner and a warning sign, both agreed before the phase starts.
 
 ## Anti-patterns to watch for in reviews
 
-Most of these show up in a design review long before they show up in production. List them in the program charter so reviewers can name them:
+You can catch most of these in a design review, well before production does it for you. I'd list them in the program charter, so that a reviewer has a name for what they see:
 
 - **Perpetual strangler:** no decommission criteria, so the bank runs and pays for both stacks indefinitely. The transitional components metric exists to catch this.
 - **Big-bang data migration disguised as incremental:** code moves capability by capability, but all data moves in one weekend. The staged ownership model is the counter.
@@ -221,28 +221,28 @@ Most of these show up in a design review long before they show up in production.
 
 ## Trade-offs and when this is too much
 
-This model costs time and money. Each gate needs evidence, each piece of evidence needs someone to produce and file it. Coexistence is the expensive period. Running two stacks plus scaffolding plus reconciliation is not cheap, and the governance adds calendar time on top.
+None of this is free. A gate needs evidence, and somebody has to produce that evidence and file it. Coexistence is already the expensive period, with two stacks, the scaffolding and the reconciliation work all running together. The governance then adds calendar time on top.
 
-So it doesn't always pay off. Strangler Fig itself is the wrong tool when:
+So there are cases where it doesn't pay off. Strangler Fig itself is the wrong tool when:
 
 - there is no interception point, no API, queue or data boundary you can put a facade on;
 - the system is small enough to replace in one well-tested release, and coexistence would cost more than the cutover;
 - you're replacing it with a vendor package, where migration is data and process driven (parallel run and reconciliation still apply);
 - the capability is stable, cheap to run and not blocking change, in which case retaining it behind an API is a legitimate outcome.
 
-Inside a strangler program, I'd also scale the gates to the risk. A notifications capability fed by an outbox doesn't need the same sign-off chain as moving write ownership of balances. What I wouldn't relax is the single-writer rule and reconciliation before any ownership transfer. Those two are cheap compared with explaining a divergent ledger to an auditor.
+Even within a strangler program, I'd size each gate to its risk. Moving write ownership of balances deserves the full sign-off chain. A notifications capability fed by an outbox doesn't. Two things I wouldn't relax in any case: the single-writer rule and reconciliation before an ownership transfer. Both cost little next to explaining a divergent ledger to an auditor.
 
-There's also a people cost. Pairing mainframe and modern engineers slows both down at first, and a risk function asked to sign every gate can become the bottleneck. Agree in phase 0 which gates need risk sign-off and which only need them informed.
+People are part of the cost too. When mainframe and modern engineers pair, both go slower at the start. And if risk has to sign every gate, risk can turn into the bottleneck. Settle in phase 0 which gates need a risk signature and which ones only need risk to be informed.
 
 ## Wrapping up
 
-- Much of the risk and a large share of the run cost of a strangler program sit in the coexistence period, so govern it with explicit roles and decision rights.
-- Seven phases per capability, each ending with an exit criterion that works as a gate and is signed by named roles.
-- Data ownership moves in stages with one writer at every stage. The stage where the new service takes writes gets the strictest gate, because rollback stops being a routing change.
-- Reconciliation is the cutover gate, and unknown outcomes on financial writes are parked for reconciliation, never guessed.
-- Track a handful of per-capability metrics, and count the transitional components so the strangler doesn't become permanent.
+- The coexistence period holds much of the risk and a large part of the run cost of a strangler program, so give it explicit roles and decision rights.
+- Each capability goes through seven phases, and each phase ends with an exit criterion that named roles sign as a gate.
+- Data ownership changes in stages, with one writer per stage. The strictest gate is the one where the new service takes over writes, since rollback is no longer a routing change after it.
+- Reconciliation is the cutover gate. An unknown outcome on a financial write is parked for reconciliation and never guessed.
+- Follow a few metrics per capability, and count the transitional components so the strangler doesn't become permanent.
 
-The phase plan, the pattern catalog and the Java examples (including `SafePostingClient` and its tests) are in the [companion repo](https://github.com/wallaceespindola/legacy-modernization-patterns). Adapt the gates and the sign-off table to your own risk function.
+You'll find the phase plan, the pattern catalog and the Java examples (`SafePostingClient` and its tests included) in the [companion repo](https://github.com/wallaceespindola/legacy-modernization-patterns). The gates and the sign-off table are a starting point, so adapt them to your own risk function.
 
 How does your organization decide when a capability is really done? I'm curious whether others formalized the gates and decommission criteria or still run on a cutover weekend and good intentions. Let me know in the comments.
 

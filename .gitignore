@@ -25,3 +25,6 @@ target/
 # Agent scratch
 .claude/settings.local.json
 agent-logs/
+
+# Marp PPTX export (the committed PPTX is built with python-pptx)
+docs/presentations/*-marp.pptx

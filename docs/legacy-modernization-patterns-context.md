@@ -1,8 +1,8 @@
-# Context: Architecture Patterns for Legacy Modernization
+# Context: architecture patterns for legacy modernization
 
 > Strangler Fig and complementary patterns for banking systems. Use this file as context for articles, decks, design docs, or AI-assisted architecture work. Covers the core patterns, mainframe and banking nuances, missing patterns, anti-patterns, and regulatory constraints.
 
-## Executive Summary
+## Executive summary
 
 - **Strangler Fig** gives a safe way to gradually replace legacy capabilities, but it does not solve every modernization problem on its own.
 - Combine it with domain modeling, translation boundaries, synchronization, event reliability, testing, and operational resilience patterns.
@@ -16,7 +16,7 @@ Three more framing points:
 2. **Coexistence is a cost, not a phase you can ignore.** Transitional architecture (facades, CDC pipelines, reconciliation jobs) has to be built, run, and eventually removed. Budget for teardown, or the "strangler" becomes a permanent second system.
 3. **Financial correctness beats velocity.** In banking, a cutover is gated by reconciliation and audit evidence, not by "the tests pass".
 
-## 1. Principal Patterns and Use Cases
+## 1. Principal patterns and use cases
 
 | # | Pattern | What it does | Banking use case | Watch out for |
 | --- | --- | --- | --- | --- |
@@ -77,7 +77,7 @@ Three more framing points:
 
 - **Source matters:** Db2 for z/OS has mature log-based CDC tooling. IMS and VSAM are harder and tool-dependent. Confirm CDC feasibility per data store early. It can decide the whole approach.
 - **CDC exposes the physical schema.** Raw CDC records are legacy-shaped, so route them through a translation step (an ACL for data) before they reach the new read model. Otherwise the new model inherits the legacy schema.
-- **Banking nuance — intraday vs posted:** many cores memo-post during the day and hard-post in the end-of-day batch. CDC will see both. The read model must model _pending_ vs _posted_ explicitly, or displayed balances will jump.
+- **Banking nuance, intraday vs posted:** many cores memo-post during the day and hard-post in the end-of-day batch. CDC will see both. The read model must model _pending_ vs _posted_ explicitly, or displayed balances will jump.
 - **Operational controls:**
   - a lag SLO with alerting;
   - per-key ordering (partition by account ID);
@@ -163,7 +163,7 @@ Three more framing points:
 | **Reverse Synchronization** | After the new service owns writes, legacy batch, reports, and regulatory feeds still need the data. Use reverse CDC or ACL write-back until those consumers are migrated. |
 | **Distributed Tracing / Correlation IDs** | Propagate one correlation ID from channel → facade → service → CICS transaction/MQ message. Without it, incident triage across two worlds is guesswork. |
 
-**Data ownership transfer — staged, single writer at every stage:**
+**Data ownership transfer, staged, single writer at every stage:**
 
 ```mermaid
 flowchart LR
@@ -185,18 +185,18 @@ Rule: **never dual-write** from application code to both stores. Exactly one sys
 - **Big-bang data migration disguised as incremental:** code goes incrementally, but all data moves in one weekend.
 - **Leaky ACL:** legacy field names, codes, or record shapes showing up in new APIs and events.
 
-## 2. How the Patterns Work Together: Account Modernization Example
+## 2. How the patterns work together: account modernization example
 
 **Starting point:** COBOL core banking on a mainframe stays system of record for ledger posting and settlement. Goal: modern Java / Spring Boot account inquiries and a better mobile UX.
 
-1. **DDD** — delineate Account Inquiry, Ledger Posting, Interest, and Customer responsibilities.
-2. **ACL** — present stable modern interfaces over legacy account data and functions.
-3. **Strangler Fig** — install the facade at a controlled interface boundary as a pass-through (100% legacy); flip routes only after the Parallel Run proves equivalence.
-4. **CDC** — populate a modern, read-optimized account view.
-5. **CQRS** — scale reads independently; financial writes stay authoritative in the ledger.
-6. **Parallel Run** — compare balance display and calculation behavior against legacy.
-7. **EDA + Transactional Outbox** — for suitable newly owned business events.
-8. **Branch by Abstraction** — where feasible, replace internal legacy calculations.
+1. **DDD:** delineate Account Inquiry, Ledger Posting, Interest, and Customer responsibilities.
+2. **ACL:** present stable modern interfaces over legacy account data and functions.
+3. **Strangler Fig:** install the facade at a controlled interface boundary as a pass-through (100% legacy); flip routes only after the Parallel Run proves equivalence.
+4. **CDC:** populate a modern, read-optimized account view.
+5. **CQRS:** scale reads independently; financial writes stay authoritative in the ledger.
+6. **Parallel Run:** compare balance display and calculation behavior against legacy.
+7. **EDA + Transactional Outbox:** for suitable newly owned business events.
+8. **Branch by Abstraction:** where feasible, replace internal legacy calculations.
 9. **Decommission** selected capabilities only after financial reconciliation, operational validation, and explicit cutover approval.
 
 **Phases and exit criteria:**
@@ -228,7 +228,7 @@ flowchart LR
     Recon -. compares .-> ReadDB
 ```
 
-## 3. Where a Solution Architect Adds Value
+## 3. Where a solution architect adds value
 
 - Pick the right pattern for the specific problem; avoid pattern-driven overengineering.
 - Identify business capability boundaries, authoritative data ownership, and transaction semantics.
@@ -247,7 +247,7 @@ flowchart LR
 - **Team topology:** align teams to bounded contexts (Conway's Law). Pair mainframe and modern engineers so legacy knowledge transfers before people retire.
 - **Non-functional parity:** batch windows, cut-off times, end-of-day/month-end/year-end processing, and leap-year/holiday calendars. These are where "equivalent" systems diverge.
 
-## 4. Where Artificial Intelligence (AI) Adds Value
+## 4. Where artificial intelligence (AI) adds value
 
 - Discover legacy dependencies and suggest extractable domains.
 - Extract and document candidate business rules.
@@ -277,7 +277,7 @@ Treat AI as a _candidate generator_ and humans plus deterministic checks as the 
 - **Translation literalism.** Line-by-line COBOL→Java output ("JOBOL") keeps legacy structure and is hard to maintain. Use AI to understand and re-express rules inside the new domain model, not to transliterate.
 - **Model governance:** keep prompt/version records and human sign-off records as audit evidence, as with any other tool in the change process.
 
-## 5. Pattern Selection Shortcuts
+## 5. Pattern selection shortcuts
 
 | Goal                            | Patterns                                         |
 | ------------------------------- | ------------------------------------------------ |
@@ -322,40 +322,40 @@ Track per capability:
 
 The last metric keeps the "perpetual strangler" visible.
 
-## Key Message
+## Key message
 
 Strangler Fig is the **migration framework**; DDD identifies **what to extract**; ACL **protects the new design**; data and messaging patterns **enable coexistence**; parallel validation plus resilience controls **make the journey safe**; and **reconciliation plus staged data-ownership transfer decide when it is actually done**. A capability is modernized only when the new system owns its data, the books balance, and the legacy path has been switched off.
 
 ## Glossary
 
-- **ACL** — Anti-Corruption Layer
-- **ADR** — Architecture Decision Record
-- **BCBS 239** — Basel Committee principles for risk data aggregation and reporting
-- **CDC** — Change Data Capture
-- **CICS** — IBM Customer Information Control System
-- **COBOL** — Common Business-Oriented Language
-- **COMP-3** — COBOL packed-decimal numeric storage format
-- **CQRS** — Command Query Responsibility Segregation
-- **DDD** — Domain-Driven Design
-- **DLQ** — Dead-Letter Queue
-- **DORA** — EU Digital Operational Resilience Act
-- **EBCDIC** — Extended Binary Coded Decimal Interchange Code (mainframe character encoding)
-- **EDA** — Event-Driven Architecture
-- **JCL** — Job Control Language (mainframe batch)
-- **MIPS / MSU** — mainframe capacity and billing units
-- **VSAM / IMS** — mainframe file system / hierarchical database
+- **ACL:** Anti-Corruption Layer
+- **ADR:** Architecture Decision Record
+- **BCBS 239:** Basel Committee principles for risk data aggregation and reporting
+- **CDC:** Change Data Capture
+- **CICS:** IBM Customer Information Control System
+- **COBOL:** Common Business-Oriented Language
+- **COMP-3:** COBOL packed-decimal numeric storage format
+- **CQRS:** Command Query Responsibility Segregation
+- **DDD:** Domain-Driven Design
+- **DLQ:** Dead-Letter Queue
+- **DORA:** EU Digital Operational Resilience Act
+- **EBCDIC:** Extended Binary Coded Decimal Interchange Code (mainframe character encoding)
+- **EDA:** Event-Driven Architecture
+- **JCL:** Job Control Language (mainframe batch)
+- **MIPS / MSU:** mainframe capacity and billing units
+- **VSAM / IMS:** mainframe file system / hierarchical database
 
 ## References
 
-- Martin Fowler — _Strangler Fig Application_; _Patterns of Legacy Displacement_ (with Ian Cartwright, Rob Horn, James Lewis); _Branch by Abstraction_; _Event Interception_
-- Eric Evans — _Domain-Driven Design_ (2003): Bounded Context, Context Map, Anti-Corruption Layer
-- Sam Newman — _Monolith to Microservices_ (2019)
-- Michael Feathers — _Working Effectively with Legacy Code_ (2004): characterization tests
-- Chris Richardson — _Microservices Patterns_ (2018): Saga, Transactional Outbox, Idempotent Consumer
-- Alistair Cockburn — _Hexagonal Architecture_ (Ports and Adapters)
-- Michael Nygard — _Release It!_: Circuit Breaker, Bulkhead
-- Hector Garcia-Molina & Kenneth Salem — _Sagas_ (1987)
+- Martin Fowler, _Strangler Fig Application_; _Patterns of Legacy Displacement_ (with Ian Cartwright, Rob Horn, James Lewis); _Branch by Abstraction_; _Event Interception_
+- Eric Evans, _Domain-Driven Design_ (2003): Bounded Context, Context Map, Anti-Corruption Layer
+- Sam Newman, _Monolith to Microservices_ (2019)
+- Michael Feathers, _Working Effectively with Legacy Code_ (2004): characterization tests
+- Chris Richardson, _Microservices Patterns_ (2018): Saga, Transactional Outbox, Idempotent Consumer
+- Alistair Cockburn, _Hexagonal Architecture_ (Ports and Adapters)
+- Michael Nygard, _Release It!_: Circuit Breaker, Bulkhead
+- Hector Garcia-Molina & Kenneth Salem, _Sagas_ (1987)
 
 ---
 
-**Author:** Wallace Espindola, Solution Architect — [wallace.espindola@gmail.com](mailto:wallace.espindola@gmail.com) · [LinkedIn](https://www.linkedin.com/in/wallaceespindola/) · [GitHub](https://github.com/wallaceespindola/)
+**Author:** Wallace Espindola, Solution Architect, [wallace.espindola@gmail.com](mailto:wallace.espindola@gmail.com) · [LinkedIn](https://www.linkedin.com/in/wallaceespindola/) · [GitHub](https://github.com/wallaceespindola/)

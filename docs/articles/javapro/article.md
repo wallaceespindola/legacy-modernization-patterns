@@ -86,7 +86,7 @@ public final class PackedDecimal {
 
 The scale is a parameter because COMP-3 has no decimal point. The implied decimal point (`V99`) lives in the copybook's PIC clause, not in the bytes. Every invalid nibble throws, because a decoder that quietly maps `0xA` to zero produces a plausible wrong balance.
 
-The record itself is fixed width: a 10-byte account id, a 1-byte type flag, a 7-byte packed balance and a 2-byte return code, all in EBCDIC. Here is `acl/LegacyAccountRecord.java`, imports trimmed:
+The record itself is fixed width: a 10-byte account id, a 1-byte type flag, a 7-byte packed balance and a 2-byte return code. The text fields are EBCDIC. Here is `acl/LegacyAccountRecord.java`, imports trimmed:
 
 ```java
 /** Anti-Corruption Layer: the fixed-width EBCDIC copybook record, parsed but not yet interpreted. */
@@ -119,7 +119,7 @@ public record LegacyAccountRecord(String accountId, char typeFlag, BigDecimal ba
 }
 ```
 
-The record keeps the legacy vocabulary on purpose (`typeFlag`, `returnCode`), because interpretation belongs to the translator. IBM037 is in the JDK's extended encoding set, which [Oracle's supported encodings page](https://docs.oracle.com/en/java/javase/21/intl/supported-encodings.html) places in the `jdk.charsets` module. A trimmed `jlink` image without that module fails at class initialization, so add it explicitly.
+The record keeps the legacy vocabulary on purpose (`typeFlag`, `returnCode`), because interpretation belongs to the translator. IBM037 is in the JDK's extended encoding set, which [Oracle's supported encodings page](https://docs.oracle.com/en/java/javase/25/intl/supported-encodings.html) places in the `jdk.charsets` module. A trimmed `jlink` image without that module fails at class initialization, so add it explicitly.
 
 Interpretation happens in the translator. `AccountLookup` is a sealed interface with three records, `Found(AccountBalance)`, `NotFound(accountId)` and `Blocked(accountId)`, and the type flag becomes an explicit `BalanceType`. Here is `acl/AccountTranslator.java`, package and imports trimmed:
 
@@ -361,7 +361,7 @@ A posting over the network can end posted, rejected or unknown, and a blind retr
     }
 ```
 
-`PostingResult` is a sealed interface with two records, `Posted` and `Unknown`. There is deliberately no `Failed`: after a timeout the client doesn't know, and the type says so. The flow is status inquiry, one retry with the same key, a second inquiry, then the `ReconciliationQueue`, a parking list that a reconciliation job drains against the ledger. The `PostingGateway` adapter would call the mainframe (for example through [IBM z/OS Connect](https://www.ibm.com/products/zos-connect-enterprise-edition)) and turn a socket or HTTP timeout into `PostingTimeoutException`. A circuit breaker around it is fine, but it must not add retries of its own.
+`PostingResult` is a sealed interface with two records, `Posted` and `Unknown`. There is deliberately no `Failed`: after a timeout the client doesn't know, and the type says so. The flow is status inquiry, one retry with the same key, a second inquiry, then the `ReconciliationQueue`, a parking list that a reconciliation job drains against the ledger. The `PostingGateway` adapter would call the mainframe (for example through [IBM z/OS Connect](https://www.ibm.com/products/zos-connect)) and turn a socket or HTTP timeout into `PostingTimeoutException`. A circuit breaker around it is fine, but it must not add retries of its own.
 
 ![Sequence diagram of SafePostingClient: a timeout triggers a status inquiry, one retry with the same idempotency key, a second inquiry and parking in the reconciliation queue when the outcome is still unknown](diagrams/unknown-outcome-posting.png)
 
@@ -398,7 +398,7 @@ Clone the repository, run `mvn verify` in `examples/account-modernization` and b
 - Martin Fowler, Strangler Fig Application (22 August 2024), [martinfowler.com](https://martinfowler.com/bliki/StranglerFigApplication.html)
 - Martin Fowler, Branch by Abstraction (7 January 2014), [martinfowler.com](https://martinfowler.com/bliki/BranchByAbstraction.html)
 - Ian Cartwright, Rob Horn, James Lewis, Patterns of Legacy Displacement (first published 20 July 2021), [martinfowler.com](https://martinfowler.com/articles/patterns-legacy-displacement/)
-- Oracle, Java SE 21 Supported Encodings, [docs.oracle.com](https://docs.oracle.com/en/java/javase/21/intl/supported-encodings.html)
+- Oracle, Java SE 25 Supported Encodings, [docs.oracle.com](https://docs.oracle.com/en/java/javase/25/intl/supported-encodings.html)
 - Eric Evans, Domain-Driven Design (2003): Anti-Corruption Layer, [domainlanguage.com](https://www.domainlanguage.com/ddd/)
 - Chris Richardson, Microservices Patterns (2018): Transactional Outbox, Idempotent Consumer, [microservices.io](https://microservices.io/patterns/)
 - Alistair Cockburn, Hexagonal Architecture (Ports and Adapters, 2005), [alistair.cockburn.us](https://alistair.cockburn.us/hexagonal-architecture/)
