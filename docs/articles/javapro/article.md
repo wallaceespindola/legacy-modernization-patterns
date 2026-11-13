@@ -7,7 +7,7 @@
 **By Wallace Espindola, Solution Architect**
 <wallace.espindola@gmail.com> | [LinkedIn](https://www.linkedin.com/in/wallaceespindola/) | [GitHub](https://github.com/wallaceespindola/)
 
-*I wrote this article with AI assistance, then reviewed, fact-checked and edited it myself. It is written for JAVAPRO and has not been published on any other site. The draft lives in the public examples repository.*
+*It is written for JAVAPRO and has not been published on any other site. The draft lives in the public examples repository.*
 
 ---
 

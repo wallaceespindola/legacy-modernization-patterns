@@ -12,8 +12,6 @@ Meta description: Routing traffic to a new service is the easy part of a Strangl
 
 *By [Wallace Espindola](https://www.linkedin.com/in/wallaceespindola/), Solution Architect | [wallace.espindola@gmail.com](mailto:wallace.espindola@gmail.com) | [GitHub](https://github.com/wallaceespindola/)*
 
-*I wrote this article with AI assistance, then reviewed, fact-checked and edited it myself.*
-
 ---
 
 Most legacy modernization plans, drawn on a whiteboard, share one picture. There is a box for the old system, a box for the new one and a facade in front of both with arrows that slowly move from left to right. Someone says "Strangler Fig", everyone nods, and the meeting moves on. It's a good picture, and it shows the part of the job that takes the least time.

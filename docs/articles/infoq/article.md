@@ -175,10 +175,6 @@ Wallace Espindola is a senior software engineer and solution architect working a
 
 ---
 
-<!-- InfoQ: no article or substantial section may be written entirely by AI. Rewrite any mostly AI-drafted section before submitting. -->
-
-**AI disclosure**: The author used Claude (Anthropic) for research support, outlining, draft text and editing suggestions, working from the author's own pattern catalog and repository. The author reviewed, fact-checked and edited the final text and is responsible for it. Dates, regulatory details and quotes were checked against the cited sources.
-
 **Publishing note**: This article is submitted for InfoQ's 4-week exclusive publishing window. It will not be cross-posted to other platforms until that window closes.
 
 **Examples repository:** <https://github.com/wallaceespindola/legacy-modernization-patterns>

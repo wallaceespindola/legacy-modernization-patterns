@@ -237,8 +237,6 @@ All 36 tests should pass in a few seconds. Good places to start reading are `Pac
 
 Which of these patterns did your team find hardest to get right around a legacy core: the ACL, the parallel run or the outbox? I'd like to hear in the comments.
 
-*I wrote this article with AI assistance, then reviewed, fact-checked and edited it myself.*
-
 **Examples repository:** <https://github.com/wallaceespindola/legacy-modernization-patterns>
 
 Need more tech insights?
