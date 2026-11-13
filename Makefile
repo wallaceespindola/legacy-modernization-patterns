@@ -27,9 +27,8 @@ links: ## Check relative links between Markdown files (offline)
 	lychee --offline --no-progress --exclude-path examples/account-modernization/target "**/*.md"
 
 slides: ## Export the Marp deck to PDF (Speaker Deck), Marp PPTX and the editable PPTX (Google Slides)
-	npx -y @marp-team/marp-cli $(DECK) --pdf --allow-local-files -o docs/presentations/$(NAME).pdf
-	uv run -q --with pypdf python3 -c "import pypdf,sys; w=pypdf.PdfWriter(clone_from=sys.argv[1]); [p.scale_by(2) for p in w.pages]; w.write(sys.argv[1])" docs/presentations/$(NAME).pdf  # 1920 px wide for Speaker Deck
-	npx -y @marp-team/marp-cli $(DECK) --pptx --allow-local-files -o docs/presentations/$(NAME)-marp.pptx
+	npx -y @marp-team/marp-cli $(DECK) --pdf --allow-local-files -o docs/presentations/$(NAME).pdf </dev/null
+	npx -y @marp-team/marp-cli $(DECK) --pptx --allow-local-files -o docs/presentations/$(NAME)-marp.pptx </dev/null
 	uv run -q --with python-pptx --with pillow docs/presentations/build_pptx.py
 
 examples: ## Build and test the Java example module
