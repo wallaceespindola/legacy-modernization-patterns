@@ -2,7 +2,7 @@
 
 <!--
 DZone submission metadata
-TL;DR: Treat the coexistence period of a core banking modernization as something you govern: phases with exit criteria as gates, one writer per stage, reconciliation as the cutover gate and a small set of metrics.
+TL;DR (DZone allows 120-170 characters): Govern the coexistence period of a core banking modernization: phase gates with exit criteria, one writer per stage, reconciliation as the cutover gate and a few metrics.
 Article type: Analysis
 Summary (meta description): A governance model for the coexistence period of a mainframe modernization: roles, phase gates, staged data ownership, reconciliation and metrics for banks.
 Primary zone: Software Design and Architecture. Additional zones: Microservices, Java, DevOps.

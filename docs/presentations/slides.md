@@ -1,32 +1,113 @@
 ---
 marp: true
-theme: gaia
+theme: default
 paginate: true
-backgroundColor: '#ffffff'
-color: '#1a2744'
+size: 16:9
+footer: 'Strangler Fig Is Not Enough'
 style: |
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --ink: #0b1530; --text: #1e293b; --muted: #64748b; --line: #e2e8f0;
+    --teal: #14b8a6; --teal-dark: #0f766e; --teal-soft: #ecfdf9; --indigo: #6366f1;
+  }
   section {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    font-size: 28px;
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 26px; line-height: 1.5; color: var(--text);
+    padding: 64px 80px 70px;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(20, 184, 166, 0.10), transparent 32%),
+      radial-gradient(circle at 0% 100%, rgba(99, 102, 241, 0.08), transparent 30%),
+      #f8fafc;
+    justify-content: flex-start;
+  }
+  h1 {
+    position: relative; font-size: 44px; font-weight: 800; letter-spacing: -0.02em;
+    color: var(--ink); margin: 0 0 26px; padding-top: 22px;
+  }
+  h1::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 72px; height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--indigo));
+  }
+  h2 { color: var(--ink); }
+  strong { color: var(--teal-dark); font-weight: 700; }
+  a { color: var(--teal-dark); text-decoration: none; }
+  ul { list-style: none; padding-left: 0; margin: 0 0 18px; }
+  ul > li { position: relative; padding-left: 34px; margin: 10px 0; }
+  ul > li::before {
+    content: ''; position: absolute; left: 4px; top: 0.55em; width: 12px; height: 12px; border-radius: 3px;
+    background: linear-gradient(135deg, var(--teal), var(--indigo));
+  }
+  ol { list-style: none; counter-reset: step; padding-left: 0; margin: 0; }
+  ol > li { counter-increment: step; position: relative; padding-left: 52px; margin: 9px 0; font-size: 24px; }
+  ol > li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px; width: 34px; height: 34px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-size: 17px; font-weight: 700; text-align: center; line-height: 34px;
+  }
+  ul + p, ol + p, table + p {
+    margin-top: 18px; padding: 16px 24px; border-left: 6px solid var(--teal); border-radius: 0 14px 14px 0;
+    background: var(--teal-soft); color: var(--ink); font-weight: 500;
+  }
+  code {
+    font-family: 'JetBrains Mono', Menlo, Consolas, monospace; font-size: 0.86em; font-variant-ligatures: none;
+    background: #e6f7f4; color: var(--teal-dark); padding: 2px 8px; border-radius: 6px;
+  }
+  pre {
+    background: #0f172a; border-radius: 16px; padding: 18px 26px; margin: 0;
+    box-shadow: 0 18px 40px -18px rgba(15, 23, 42, 0.55); font-size: 0.52em; line-height: 1.45;
+  }
+  pre code { background: none; color: #e2e8f0; padding: 0; font-size: 1em; }
+  pre + p { margin-top: 10px; font-size: 18px; color: var(--muted); }
+  pre + p code { background: none; color: var(--muted); padding: 0; }
+  .hljs-keyword, .hljs-built_in { color: #c4b5fd; }
+  .hljs-title, .hljs-title.function_ { color: #5eead4; }
+  .hljs-string { color: #fcd34d; }
+  .hljs-comment { color: #94a3b8; font-style: italic; }
+  .hljs-type, .hljs-class { color: #7dd3fc; }
+  .hljs-literal, .hljs-number { color: #fda4af; }
+  .hljs-variable, .hljs-params { color: #bae6fd; }
+  table {
+    display: table; border-collapse: separate; border-spacing: 0; width: 100%; font-size: 19px;
+    border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.45);
+  }
+  th { background: var(--ink); color: #fff; font-weight: 600; text-align: left; padding: 7px 20px; border: none; }
+  td { background: #fff; padding: 5px 20px; border: none; border-bottom: 1px solid var(--line); }
+  tr:nth-child(even) td { background: #f1f5f9; }
+  td:first-child { font-weight: 600; color: var(--ink); }
+  footer { left: 80px; bottom: 26px; font-size: 15px; color: var(--muted); letter-spacing: 0.04em; }
+  section::after {
+    right: 64px; bottom: 22px; font-size: 15px; font-weight: 600; color: #fff;
+    background: var(--ink); border-radius: 999px; padding: 4px 14px;
+  }
+  section.diagram p { text-align: center; }
+  section.diagram img {
+    background: #fff; border-radius: 18px; padding: 18px;
+    box-shadow: 0 18px 40px -20px rgba(15, 23, 42, 0.45);
+  }
+  section.diagram p:last-child:not(:has(img)) {
+    margin-top: 22px; font-size: 24px; color: var(--ink);
   }
   section.lead {
-    background: #0d1b3e;
-    color: #ffffff;
+    justify-content: center; padding: 80px 110px;
+    color: #e2e8f0;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(45, 212, 191, 0.35), transparent 40%),
+      radial-gradient(circle at 5% 95%, rgba(99, 102, 241, 0.45), transparent 45%),
+      linear-gradient(135deg, #0b1530 0%, #111c44 60%, #1e1b4b 100%);
   }
-  section.lead h1 { color: #4ECDC4; }
-  h1, h2 { color: #0d1b3e; }
-  h1 { font-size: 1.5em; }
-  section.lead h2 { color: #ffffff; }
-  section.lead a { color: #4ECDC4; }
-  code { font-family: 'Menlo', 'Consolas', monospace; }
-  section pre { font-size: 0.62em; }
-  table { font-size: 0.8em; }
-  section.diagram p { text-align: center; }
+  section.lead h1 {
+    font-size: 76px; line-height: 1.08; margin-bottom: 18px; padding-top: 30px;
+    background: linear-gradient(90deg, #ffffff 0%, #99f6e4 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  section.lead h1::before { width: 96px; height: 8px; border-radius: 4px; }
+  section.lead h2 { color: #cbd5e1; font-size: 34px; font-weight: 500; margin: 0 0 46px; }
+  section.lead p { color: #cbd5e1; font-size: 23px; margin: 4px 0; }
+  section.lead strong { color: #fff; }
+  section.lead a { color: #5eead4; }
 ---
 
 <!-- _class: lead -->
-<!-- _backgroundColor: '#0d1b3e' -->
-<!-- _color: '#ffffff' -->
+<!-- _footer: '' -->
 <!-- _paginate: false -->
 
 # Strangler Fig Is Not Enough
@@ -87,7 +168,7 @@ But look at the second list. Routing doesn't tell you what to extract, it doesn'
 
 # How the patterns fit together
 
-![w:1100](diagrams/pattern-map.png)
+![h:450](diagrams/pattern-map.png)
 
 <!--
 This is the account inquiry example from the repo. The facade routes new reads to a Java service. Legacy paths and the fallback go through an anti-corruption layer. CDC feeds a read model with pending and posted balances. The new service runs in parallel with the legacy path until it proves equivalence. New events leave through an outbox. A reconciliation job compares the books on both sides.
@@ -203,7 +284,7 @@ And customers expect to see their own payment right away, so you need a plan for
 
 # Move data ownership in stages
 
-![w:1100](diagrams/ownership-stages.png)
+![w:1060](diagrams/ownership-stages.png)
 
 **Exactly one writer at every stage. Never dual-write from application code.**
 
@@ -249,7 +330,7 @@ And the shadow path must never send a notification or post money. Make that impo
 
 # From shadow to decommission
 
-![w:1100](diagrams/rollout-stages.png)
+![w:1060](diagrams/rollout-stages.png)
 
 <!--
 The rollout stages. Shadow first, then canary for a small segment while legacy is still computed and compared, then full cutover with legacy kept warm for a rollback window, then decommission.
@@ -262,7 +343,7 @@ Mismatches above the agreed threshold send you back to shadow. That loop is the 
 
 # A timeout is an unknown outcome
 
-![h:470](diagrams/unknown-outcome.png)
+![w:1060](diagrams/unknown-outcome.png)
 
 <!--
 This one matters for every write that touches money. When a posting call times out, you don't know whether it happened.
@@ -421,8 +502,7 @@ To close. Strangler Fig is the framework; DDD decides what to extract; the ACL p
 ---
 
 <!-- _class: lead -->
-<!-- _backgroundColor: '#0d1b3e' -->
-<!-- _color: '#ffffff' -->
+<!-- _footer: '' -->
 <!-- _paginate: false -->
 
 # Thank you

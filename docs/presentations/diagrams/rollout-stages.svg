@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="350" viewBox="0 0 1600 350" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="aw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d97706"/>
+    </marker>
+    <filter id="s" x="-10%" y="-10%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="350" fill="#ffffff"/>
+  <rect x="30" y="50" width="268" height="150" rx="16" fill="#eef2ff" stroke="#6366f1" stroke-width="2.5" filter="url(#s)"/>
+  <text x="164.0" y="109.0" text-anchor="middle" font-size="24" font-weight="700" fill="#1e1b4b">Shadow</text>
+  <text x="164.0" y="139.0" text-anchor="middle" font-size="19" fill="#4f46e5">new result compared,</text>
+  <text x="164.0" y="164.0" text-anchor="middle" font-size="19" fill="#4f46e5">then discarded</text>
+  <rect x="344" y="50" width="268" height="150" rx="16" fill="#ecfdf9" stroke="#14b8a6" stroke-width="2.5" filter="url(#s)"/>
+  <text x="478.0" y="109.0" text-anchor="middle" font-size="24" font-weight="700" fill="#0b3b36">Canary</text>
+  <text x="478.0" y="139.0" text-anchor="middle" font-size="19" fill="#0f766e">small segment</text>
+  <text x="478.0" y="164.0" text-anchor="middle" font-size="19" fill="#0f766e">served by new</text>
+  <path d="M298,125 L340,125" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="658" y="50" width="268" height="150" rx="16" fill="#ecfdf9" stroke="#14b8a6" stroke-width="2.5" filter="url(#s)"/>
+  <text x="792.0" y="119.0" text-anchor="middle" font-size="24" font-weight="700" fill="#0b3b36">Cutover</text>
+  <text x="792.0" y="149.0" text-anchor="middle" font-size="19" fill="#0f766e">all traffic on new</text>
+  <path d="M612,125 L654,125" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="972" y="50" width="268" height="150" rx="16" fill="#fff7ed" stroke="#f59e0b" stroke-width="2.5" filter="url(#s)"/>
+  <text x="1106.0" y="119.0" text-anchor="middle" font-size="24" font-weight="700" fill="#7c2d12">Rollback window</text>
+  <text x="1106.0" y="149.0" text-anchor="middle" font-size="19" fill="#b45309">legacy kept warm</text>
+  <path d="M926,125 L968,125" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="1286" y="50" width="268" height="150" rx="16" fill="#0f1b3d" stroke="#0f1b3d" stroke-width="2.5" filter="url(#s)"/>
+  <text x="1420.0" y="119.0" text-anchor="middle" font-size="24" font-weight="700" fill="#ffffff">Decommission</text>
+  <text x="1420.0" y="149.0" text-anchor="middle" font-size="19" fill="#a5b4fc">legacy path off</text>
+  <path d="M1240,125 L1282,125" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#a)"/>
+  <path d="M478,200 L478,290 L164,290 L164,204" fill="none" stroke="#d97706" stroke-width="2.5" stroke-dasharray="9 7" marker-end="url(#aw)"/>
+  <text x="520" y="322" text-anchor="middle" font-size="18" font-style="italic" fill="#d97706">unexplained mismatches above threshold: back to shadow</text>
+</svg>

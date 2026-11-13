@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="640" viewBox="0 0 1600 640" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="aw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d97706"/>
+    </marker>
+    <filter id="s" x="-10%" y="-10%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="640" fill="#ffffff"/>
+  <rect x="40" y="250" width="260" height="120" rx="16" fill="#ecfdf9" stroke="#14b8a6" stroke-width="2.5" filter="url(#s)"/>
+  <text x="170.0" y="304.0" text-anchor="middle" font-size="24" font-weight="700" fill="#0b3b36">post(request)</text>
+  <text x="170.0" y="334.0" text-anchor="middle" font-size="19" fill="#0f766e">idempotency key K</text>
+  <rect x="380" y="250" width="280" height="120" rx="16" fill="#fff7ed" stroke="#f59e0b" stroke-width="2.5" filter="url(#s)"/>
+  <text x="520.0" y="294.0" text-anchor="middle" font-size="24" font-weight="700" fill="#7c2d12">Timeout</text>
+  <text x="520.0" y="324.0" text-anchor="middle" font-size="19" fill="#b45309">outcome unknown,</text>
+  <text x="520.0" y="349.0" text-anchor="middle" font-size="19" fill="#b45309">not failed</text>
+  <rect x="740" y="250" width="260" height="120" rx="16" fill="#eef2ff" stroke="#6366f1" stroke-width="2.5" filter="url(#s)"/>
+  <text x="870.0" y="304.0" text-anchor="middle" font-size="24" font-weight="700" fill="#1e1b4b">status(K)</text>
+  <text x="870.0" y="334.0" text-anchor="middle" font-size="19" fill="#4f46e5">ask the ledger first</text>
+  <rect x="1100" y="40" width="460" height="120" rx="16" fill="#ecfdf9" stroke="#14b8a6" stroke-width="2.5" filter="url(#s)"/>
+  <text x="1330.0" y="94.0" text-anchor="middle" font-size="24" font-weight="700" fill="#0b3b36">Found</text>
+  <text x="1330.0" y="124.0" text-anchor="middle" font-size="19" fill="#0f766e">return POSTED, no retry</text>
+  <rect x="1100" y="250" width="460" height="120" rx="16" fill="#eef2ff" stroke="#6366f1" stroke-width="2.5" filter="url(#s)"/>
+  <text x="1330.0" y="304.0" text-anchor="middle" font-size="24" font-weight="700" fill="#1e1b4b">Not found</text>
+  <text x="1330.0" y="334.0" text-anchor="middle" font-size="19" fill="#4f46e5">retry once with the same key K</text>
+  <rect x="1100" y="460" width="460" height="130" rx="16" fill="#0f1b3d" stroke="#0f1b3d" stroke-width="2.5" filter="url(#s)"/>
+  <text x="1330.0" y="509.0" text-anchor="middle" font-size="24" font-weight="700" fill="#ffffff">Still unknown</text>
+  <text x="1330.0" y="539.0" text-anchor="middle" font-size="19" fill="#a5b4fc">park K in the reconciliation queue,</text>
+  <text x="1330.0" y="564.0" text-anchor="middle" font-size="19" fill="#a5b4fc">return UNKNOWN</text>
+  <path d="M300,310 L376,310" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#a)"/>
+  <path d="M660,310 L736,310" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#a)"/>
+  <path d="M1000,290 L1040,290 L1040,100 L1096,100" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#a)"/>
+  <path d="M1000,310 L1096,310" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#a)"/>
+  <path d="M1330,250 L1330,164" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="1350" y="214" text-anchor="start" font-size="18" font-style="italic" fill="#334155">retry posted</text>
+  <path d="M1330,370 L1330,456" fill="none" stroke="#d97706" stroke-width="2.5" marker-end="url(#aw)"/>
+  <text x="1312" y="408" text-anchor="end" font-size="18" font-style="italic" fill="#d97706">timeout again,</text>
+  <path d="M1330,370 L1330,456" fill="none" stroke="#d97706" stroke-width="2.5" marker-end="url(#aw)"/>
+  <text x="1312" y="432" text-anchor="end" font-size="18" font-style="italic" fill="#d97706">status still empty</text>
+</svg>

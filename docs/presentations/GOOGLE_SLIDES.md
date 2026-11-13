@@ -1,6 +1,6 @@
 # Getting this deck into Google Slides
 
-The deck is `legacy-modernization-patterns.pptx` (23 slides, 16:9, with speaker notes). It is built from the Marp source `slides.md` with python-pptx, so every text box, table and code block stays editable.
+The deck is `legacy-modernization-patterns.pptx` (23 slides, 16:9, with speaker notes). It is built from the Marp source `slides.md` by `build_pptx.py` (python-pptx, run by `make slides`), so every text box, table and code block stays editable.
 
 ## Step 0: Get the file
 
@@ -62,14 +62,14 @@ npx @marp-team/marp-cli docs/presentations/slides.md --allow-local-files -o docs
 
 ## Diagrams
 
-Sources live in `docs/presentations/diagrams/`:
+Sources live in `docs/presentations/diagrams/` as hand-written SVG, one palette shared with the deck theme. `make diagrams` renders each one with `rsvg-convert -z 2 -b white <name>.svg -o <name>.png`.
 
-| Diagram | Source | Render |
-| --- | --- | --- |
-| How the patterns fit together | `pattern-map.mmd` | `mmdc -i pattern-map.mmd -o pattern-map.png -b white -s 2` |
-| Data ownership stages | `ownership-stages.mmd` | `mmdc -i ownership-stages.mmd -o ownership-stages.png -b white -s 2` |
-| Shadow to decommission | `rollout-stages.mmd` | `mmdc -i rollout-stages.mmd -o rollout-stages.png -b white -s 2` |
-| Unknown outcome on a timed-out posting | `unknown-outcome.puml` | `plantuml -tpng unknown-outcome.puml` |
+| Diagram | Source |
+| --- | --- |
+| How the patterns fit together | `pattern-map.svg` |
+| Data ownership stages | `ownership-stages.svg` |
+| Shadow to decommission | `rollout-stages.svg` |
+| Unknown outcome on a timed-out posting | `unknown-outcome.svg` |
 
 ---
 

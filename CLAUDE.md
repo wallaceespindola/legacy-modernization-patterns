@@ -19,7 +19,7 @@ A docs-first project about Strangler Fig and its complementary patterns for core
 make diagrams   # render every .puml (plantuml), .mmd (mermaid-cli) and .svg (rsvg-convert) to a PNG next to its source
 make lint       # markdownlint-cli2, config in .markdownlint.json
 make links      # offline relative-link check (needs lychee)
-make slides     # Marp export of docs/presentations/slides.md to PDF and PPTX
+make slides     # Marp export of docs/presentations/slides.md to PDF and PPTX, plus the editable PPTX (build_pptx.py)
 make examples   # mvn verify in the Java module
 make format     # Prettier, one line per paragraph
 ```
