@@ -1,10 +1,13 @@
 """Build the editable PPTX (Google Slides import) from the Marp source slides.md.
 
 Same palette as the Marp theme; Arial and Courier New only so Google Slides keeps the layout.
-Usage: uv run --with python-pptx docs/presentations/build_pptx.py
+Usage: uv run --with python-pptx --with pillow docs/presentations/build_pptx.py
+Writes docs/presentations/<repo-name>.pptx; the footer comes from the `footer:` in the Marp front matter.
 """
 
 import re
+import shutil
+import zipfile
 from pathlib import Path
 
 from PIL import Image
@@ -16,8 +19,9 @@ from pptx.util import Emu, Inches, Pt
 
 HERE = Path(__file__).parent
 SRC = HERE / "slides.md"
-OUT = HERE / "legacy-modernization-patterns.pptx"
-FOOTER = "Strangler Fig Is Not Enough"
+OUT = HERE / f"{HERE.resolve().parents[1].name}.pptx"
+FOOTER_MATCH = re.search(r"^footer:\s*'?([^'\n]*)'?", SRC.read_text(), re.MULTILINE)
+FOOTER = FOOTER_MATCH.group(1) if FOOTER_MATCH else ""
 
 INK = RGBColor(0x0B, 0x15, 0x30)
 TEXT = RGBColor(0x1E, 0x29, 0x3B)
@@ -101,6 +105,7 @@ def blocks(md: str):
 def runs(paragraph, text, size, color, bold_color=None, font="Arial"):
     """Add Markdown inline runs (**bold**, `code`, [link](url)) to a paragraph."""
     text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"<((?:https?://|[^\s>]+@)[^>]+)>", r"\1", text)
     for part in re.split(r"(\*\*[^*]+\*\*|`[^`]+`)", text):
         if not part:
             continue
@@ -232,7 +237,7 @@ def content_slide(slide, md, cls, number):
             y += Inches(0.5)
         elif kind == "code":
             n = payload.count("\n") + 1
-            size = 11 if n > 16 else 14
+            size = 11 if n > 18 else (12 if n > 16 else 14)
             h = Inches(0.23 * n * size / 12 + 0.45)
             rect(slide, LEFT, y, CONTENT_W, h, CODE_BG, MSO_SHAPE.ROUNDED_RECTANGLE).adjustments[0] = 0.04
             _, tf = textbox(slide, LEFT + Inches(0.35), y + Inches(0.2), CONTENT_W - Inches(0.7), h - Inches(0.4))
@@ -281,6 +286,22 @@ def content_slide(slide, md, cls, number):
         prev = kind
 
 
+def fix_notes_master(path: Path) -> None:
+    """Keynote rejects python-pptx files with notes unless presentation.xml lists the notes master."""
+    tmp = path.with_suffix(".tmp")
+    with zipfile.ZipFile(path) as src, zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as dst:
+        rels = src.read("ppt/_rels/presentation.xml.rels").decode()
+        rid = re.search(r'Id="(rId\d+)"[^>]*Target="notesMasters/', rels) or re.search(
+            r'Target="notesMasters/[^"]*"[^>]*Id="(rId\d+)"', rels)
+        for item in src.infolist():
+            data = src.read(item.filename)
+            if item.filename == "ppt/presentation.xml" and rid and b"notesMasterIdLst" not in data:
+                tag = f'<p:notesMasterIdLst><p:notesMasterId r:id="{rid.group(1)}"/></p:notesMasterIdLst>'
+                data = data.replace(b"</p:sldMasterIdLst>", b"</p:sldMasterIdLst>" + tag.encode())
+            dst.writestr(item, data)
+    shutil.move(tmp, path)
+
+
 def main():
     prs = Presentation()
     prs.slide_width, prs.slide_height = W, H
@@ -294,6 +315,7 @@ def main():
         if s["notes"]:
             slide.notes_slide.notes_text_frame.text = s["notes"]
     prs.save(OUT)
+    fix_notes_master(OUT)
     print(f"{OUT.name}: {len(prs.slides)} slides")
 
 
