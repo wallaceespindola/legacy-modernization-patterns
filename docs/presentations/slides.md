@@ -96,8 +96,7 @@ style: |
   }
   section.lead h1 {
     font-size: 76px; line-height: 1.08; margin-bottom: 18px; padding-top: 30px;
-    background: linear-gradient(90deg, #ffffff 0%, #99f6e4 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
+    color: #ffffff;
   }
   section.lead h1::before { width: 96px; height: 8px; border-radius: 4px; }
   section.lead h2 { color: #cbd5e1; font-size: 34px; font-weight: 500; margin: 0 0 46px; }
